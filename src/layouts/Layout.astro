@@ -1,0 +1,50 @@
+---
+import '../styles.css'
+import { createReader } from '@keystatic/core/reader';
+import keystaticConfig from '../../keystatic.config';
+
+export interface Props {
+	title?: string;
+}
+
+// Keystatic 리더 생성 (로컬/서버 빌드 시점 데이터 읽기용)
+const reader = createReader(process.cwd(), keystaticConfig);
+
+const settings = await reader.singletons.settings.read();
+
+// 파비콘 경로 설정 (데이터가 없으면 기본값 사용)
+const faviconUrl = settings?.favicon || './src/assets/favicon/favicon.svg';
+
+const siteTitle = settings?.title || 'Mago Cluster';
+const siteDesc = settings?.description || 'Mago Cluster';
+
+const { title } = Astro.props;
+const pageTitle = title ? `${title} | ${siteTitle}` : siteTitle;
+
+const navigation = settings?.navigation;
+const isNavigation = navigation?.length ? true : false;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="description" content="Astro description">
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/png" href={faviconUrl} />
+		<meta name="generator" content={siteDesc} />
+		<title>{ pageTitle }</title>
+	</head>
+	<body>
+		{ isNavigation ? (
+			<div class="navigation">
+				<ul>
+					{ navigation?.map( item => (<li><a href={item.href}>{item.label}</a></li>) ) }
+				</ul>
+			</div>
+		) : null }
+		<main id="Content">
+			<slot />
+		</main>
+	</body>
+</html>

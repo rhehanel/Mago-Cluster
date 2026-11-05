@@ -1,0 +1,489 @@
+/* 
+  color
+  #890707 -birghter red
+  #7b0513 -darker red
+  #d47979 -bright pink
+*/
+
+@font-face {
+  font-family: 'Khn'; /* 사용할 가상의 폰트 이름 */
+  src: url('./assets/fonts/2022khn.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Kiya'; /* 사용할 가상의 폰트 이름 */
+  src: url('./assets/fonts/Kiya.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+    font-family: 'Hamlet';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2110@1.0/Hahmlet-Thin.woff2') format('woff2');
+    font-weight: 100;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Hamlet';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2110@1.0/Hahmlet-ExtraLight.woff2') format('woff2');
+    font-weight: 200;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Hamlet';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2110@1.0/Hahmlet-Light.woff2') format('woff2');
+    font-weight: 300;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Hamlet';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2110@1.0/Hahmlet-Regular.woff2') format('woff2');
+    font-weight: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Hamlet';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2110@1.0/Hahmlet-SemiBold.woff2') format('woff2');
+    font-weight: 600;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Hamlet';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2110@1.0/Hahmlet-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Hamlet';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2110@1.0/Hahmlet-ExtraBold.woff2') format('woff2');
+    font-weight: 800;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Hamlet';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2110@1.0/Hahmlet-Black.woff2') format('woff2');
+    font-weight: 900;
+    font-display: swap;
+}
+
+html, body,
+h1, h2, h3, h4, h5, h6,
+a, p, span,
+em, small, strong,
+sub, sup,
+mark, del, ins, strike,
+abbr, dfn,
+blockquote, q, cite,
+code, pre,
+ol, ul, li, dl, dt, dd,
+div, section, article,
+main, aside, nav, hgroup, footer,
+img, figure, figcaption,
+address, time,
+audio, video,
+canvas, iframe,
+details, summary,
+fieldset, form, label, legend,
+table, caption,
+tbody, tfoot, thead,
+tr, th, td {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    scrollbar-color: #7b0513 #d47979;
+}
+
+*,
+*:after,
+*:before {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+html {
+  line-height: 1.75;
+  font-size: 1.25rem;
+  font-family: "Hamlet", sans-serif;
+  background: #7b0513;
+  overscroll-behavior: none;
+  overflow: overlay;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+ul,
+ol {
+  color: #7b0513;
+}
+
+a {
+  color: #604242;
+}
+
+img {
+  height: auto;
+  max-width: 100%;
+  display: block;
+}
+
+body {
+  display: block;
+  position: inherit;
+  width: 100%;
+  height: 100vh;
+  /*  background:#d47979;*/
+  background: repeating-radial-gradient(#7b0513 , #d47979 20%);
+}
+
+.astro-debug {
+  position: fixed;
+  z-index: 11111;
+}
+
+#Content {
+  position: fixed;
+  display: block;
+  border: #7b0513 solid 1rem;
+  overflow-y: scroll;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #d4797966;
+}
+
+.navigation {
+  background: #d47979;
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  width: 140px;
+  z-index: 111;
+  border-top: #7b0513 solid 1rem;
+  border-left: #7b0513 solid 1rem;
+}
+
+.navigation li {
+  list-style: none;
+  text-align: center;
+  font-family: 'Kiya', serif;
+  background: radial-gradient(circle, #d47979 40%, #7b0513 100%);
+}
+
+.navigation li a {
+  display: block;
+  color: #7b0513aa; 
+  text-underline-position: above;
+  text-transform: capitalize;
+  transition-duration: 0.35s;
+}
+
+.navigation li a:hover {
+  color: #7b0513; 
+  box-shadow: inset 0 0px 40px 0 #d47979cc;
+}
+
+.imgList {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 1rem;
+}
+
+article header {
+  border: 1px solid #7b0513;
+  background: radial-gradient(circle, #d47979cc 10%, #7b0513cc);
+}
+
+#Content h1 {
+  font-weight: 300;
+  font-size: 0.95rem;
+  line-height: 1.5rem;
+  margin-bottom: 0.2rem;
+}
+
+#Content h1.indexTitle {
+    font-size: 10rem;
+    text-align: center;
+    font-family: "Kiya", sans-serif;
+    margin-top: 4rem
+}
+
+.work-container .video-container {
+  width: 100%;
+}
+
+.work-container article p img {
+  width: 100%;
+}
+
+.title .time-data {
+  display: flex;
+  gap: 0.2rem;
+  font-size: 0.7rem;
+  color:#d47979;
+}
+
+.title .time-data small,
+.title .time-data span {
+  display: block;
+  font-size: 0.7rem;
+}
+
+.list-block {
+  color: #7b0513;
+  line-height: 1rem;
+  font-size: 0.8rem;
+  border: 1px solid #7b0513;
+  background: rgb(212, 121, 121, 0.9);
+  box-shadow: 6px 4px 5px rgb(123, 5, 19, 0.4);
+}
+
+.list-block ul li {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.list-block a {
+  color: #7b0513;
+}
+
+.markdoc-content {
+  width: fit-content;
+  padding: 1rem;
+  font-size: 0.8rem;
+}
+
+.markdoc-content article p {
+  margin-bottom: 0.4rem;
+  line-height: 1.25rem;
+}
+
+.artist-list {
+  font-size: 0.7rem;
+  color: #d47979;
+  list-style: none;
+}
+
+.artist-list span {
+  font-size: 0.8rem;
+}
+
+.artist-list a {
+  color: #d47979;
+  text-underline-position: under;
+}
+
+.index {
+  display: flex;
+  margin: 0.4rem;
+  font-size: 0.8rem;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+}
+
+.collections-wrapper {
+  width: 49.75%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.collection-list h2 {
+  color: #d47979;
+  font-family: 'Kiya', serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: inline-block;
+  background: #7b0513;
+  border-radius: 10px 10px 0 0;
+  padding: 0 1.5rem;
+  box-shadow: 4px 0px 5px rgb(123, 5, 19, 0.2);
+  border: 1px solid #7b0513;
+  border-bottom: none;
+}
+
+.sortable-table {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #7b0513;
+  background: rgb(212, 121, 121, 0.9);
+  box-shadow: 6px 4px 5px rgb(123, 5, 19, 0.4);
+  text-align: left;
+  color: #7b0513;
+}
+
+.sortable-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.sortable-table a {
+  color: #7b0513;
+  text-underline-position: under;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.sortable-table a:hover {
+  text-decoration: underline;
+}
+
+.sortable-table th {
+  font-size: 0.8rem;
+  border-bottom: 1px solid #7b0513;
+  color: #7b0513;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s;
+  font-weight: 500;
+}
+
+.sortable-table th:hover {
+  color: #7b0513aa;
+}
+
+.collection-filters {
+  width: 200px;
+  height: fit-content;
+  font-size: 0.8rem;
+  color: #7b0513;
+  text-align: left;
+  border: 1px solid #7b0513;
+  background: rgb(212, 121, 121, 0.9);
+  box-shadow: 6px 4px 5px rgb(123, 5, 19, 0.4);
+  padding: 0.6rem;
+}
+
+.filters-header {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid #7b0513;
+}
+
+.filters-header h3 {
+  font-family: 'Kiya', serif;
+  font-size: 0.8rem;
+  line-height: 0.8rem;
+}
+
+.filters-header button {
+  width: 1.2rem;
+  cursor: pointer;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  transition: all 0.2s ease-in-out;
+}
+
+.filters-header button:hover {
+  background: radial-gradient(#7b051355, #7b051300 70%);
+}
+
+.filters-header svg {
+  width: 100%;
+}
+
+.filter-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #7b0513;
+  font-size: 0.8rem;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 300;
+  line-height: 0.8rem;
+  margin-bottom: 0.5rem;
+  font-family: 'Khn', serif;
+}
+
+.filter-label input[type="checkbox"] {
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 0.85rem;
+  height: 0.85rem;
+  border: 1px solid #7b0513;
+  accent-color: #7b0513;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease-in-out;
+  margin: 0;
+}
+
+/* 마우스를 올렸을 때 (호버) 효과 */
+.filter-label input[type="checkbox"]:hover {
+  background: radial-gradient(#7b051311 20%, #7b051366 100%);
+}
+
+/* 체크박스가 선택된 상태: 어두운 배경(#7b0513) */
+.filter-label input[type="checkbox"]:checked {
+  background: radial-gradient(#7b0522 20%, #7b0513 100%);
+  border-color: #7b0513;
+}
+
+/* 체크박스 선택 시 나타나는 브이(V) 마크 (#d47979 색상) */
+.filter-label input[type="checkbox"]:checked::after {
+  content: "";
+  display: block;
+  width: 0.62rem;
+  height: 0.62rem;
+  /* SVG 코드를 통해 #d47979 색상의 체크 마크 삽입 (%23d47979 = #d47979) */
+  background-image: url("data:image/svg+xml,%3Csvg%20fill%3D%22%23d47979%22%20height%3D%22200px%22%20width%3D%22200px%22%20version%3D%221.1%22%20id%3D%22Layer_1%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20viewBox%3D%220%200%20493.051%20493.051%22%20xml%3Aspace%3D%22preserve%22%20stroke%3D%22%23d47979%22%3E%3Cg%20id%3D%22SVGRepo_bgCarrier%22%20stroke-width%3D%220%22%3E%3C%2Fg%3E%3Cg%20id%3D%22SVGRepo_tracerCarrier%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3C%2Fg%3E%3Cg%20id%3D%22SVGRepo_iconCarrier%22%3E%20%3Cg%3E%20%3Cg%3E%20%3Cpath%20d%3D%22M430.57%2C145.344c-62.969-62.969-165.055-62.969-227.999%2C0.001c-52.041%2C52.016-52.041%2C136.399%2C0.007%2C188.421%20c43.294%2C43.294%2C113.487%2C43.294%2C156.763-0.008c36.295-36.295%2C36.295-95.157-0.005-131.456%20c-30.687-30.687-80.477-30.687-111.187-0.007c-8.335%2C8.327-8.342%2C21.835-0.014%2C30.17c8.327%2C8.335%2C21.835%2C8.342%2C30.17%2C0.014%20c14.048-14.035%2C36.834-14.035%2C50.861-0.007c19.637%2C19.637%2C19.637%2C51.484%2C0%2C71.121c-26.617%2C26.633-69.789%2C26.633-96.422%2C0%20c-35.38-35.362-35.38-92.718-0.004-128.077c46.289-46.307%2C121.355-46.307%2C167.658-0.004%20c59.936%2C59.955%2C59.936%2C157.15-0.002%2C217.107c-77.021%2C77.021-201.903%2C77.021-278.926-0.002%20c-98.357-98.357-98.357-257.841%2C0-356.198c8.331-8.331%2C8.331-21.839%2C0-30.17c-8.331-8.331-21.839-8.331-30.17%2C0%20c-115.019%2C115.019-115.019%2C301.519%2C0%2C416.538c93.686%2C93.686%2C245.583%2C93.686%2C339.268%2C0%20C507.165%2C346.165%2C507.165%2C221.963%2C430.57%2C145.344z%22%3E%3C%2Fpath%3E%20%3C%2Fg%3E%20%3C%2Fg%3E%20%3C%2Fg%3E%3C%2Fsvg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.preview-panel {
+  width: 30%;
+  max-height: 100%;
+  display: flex;
+  align-items: center;
+  top: 1rem;
+  bottom: 1rem;
+  position: fixed;
+  left: calc(50% - 15%);
+}
+
+#preview-container {
+  width: 100%;
+  display: none; /* 이미지가 없거나 호버되지 않으면 완전히 사라짐 */
+}
+
+#preview-container.has-image {
+  display: block; /* 이미지가 있을 때만 나타남 */
+}
+
+#preview-img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  border: 1px solid #7b0513;
+  background: rgb(212, 121, 121, 0.9);
+  padding: 0.3rem;
+  box-shadow: 6px 4px 5px rgb(123, 5, 19, 0.4);
+}
+

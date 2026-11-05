@@ -1,0 +1,363 @@
+---
+import { getCollection, getEntry } from 'astro:content';
+import Layout from '../layouts/Layout.astro';
+
+const postsData = await getCollection('posts');
+const worksData = await getCollection('works');
+const artistsData = await getCollection('artists');
+
+// 1. 날짜 정규화 헬퍼 함수
+function parseTimeField(timeField: any) {
+  if (!timeField || !timeField.discriminant) {
+    return { timestamp: 0, display: '' };
+  }
+
+  const type = timeField.discriminant;
+  const data = timeField.value || {};
+
+  let dateObj = new Date(0);
+  let display = '';
+
+  if (type === 'year') {
+    const y = parseInt(data.value, 10);
+    if (!isNaN(y)) {
+      dateObj = new Date(y, 0, 1);
+      display = String(y);
+    }
+  } else if (type === 'date') {
+    if (data.value) {
+      dateObj = new Date(data.value);
+      const y = dateObj.getFullYear();
+      const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const d = String(dateObj.getDate()).padStart(2, '0');
+      display = `${y}.${m}.${d}`;
+    }
+  } else if (type === 'time') {
+    const isCustom = data.discriminant === true;
+    const subData = data.value || {};
+    
+    if (isCustom) {
+      const match = subData.dates?.match(/\d{4}/);
+      if (match) dateObj = new Date(parseInt(match[0], 10), 0, 1);
+      display = subData.dates || '';
+    } else {
+      if (subData.date) {
+        dateObj = new Date(subData.date);
+        const y = dateObj.getFullYear();
+        const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const d = String(dateObj.getDate()).padStart(2, '0');
+        
+        let endDisplay = '';
+        if (subData.enddate) {
+           const eDate = new Date(subData.enddate);
+           endDisplay = ` ~ ${eDate.getFullYear()}.${String(eDate.getMonth() + 1).padStart(2, '0')}.${String(eDate.getDate()).padStart(2, '0')}`;
+        }
+        display = `${y}.${m}.${d}${endDisplay}`;
+      }
+    }
+  }
+
+  return { timestamp: dateObj.getTime(), display };
+}
+
+// 2. 아티스트 이름 추출 헬퍼 함수
+async function parseArtistsField(artistsField: any) {
+  if (!artistsField || !Array.isArray(artistsField)) return '';
+  
+  const names = await Promise.all(artistsField.map(async (item) => {
+    if (item.discriminant === 'list') {
+      const slug = item.value;
+      if (!slug) return null;
+      const artistEntry = await getEntry('artists', slug);
+      return artistEntry?.data?.name || slug;
+    } else if (item.discriminant === 'text') {
+      return item.value?.name || '';
+    }
+    return null;
+  }));
+  
+  return names.filter(Boolean).join(', ');
+}
+
+// 3. 데이터 가공 및 정렬
+const processedPosts = await Promise.all(postsData.map(async (post) => {
+  const timeData = parseTimeField(post.data.time);
+  const artistStr = await parseArtistsField(post.data.artists);
+  return {
+    id: post.id.replace(/\/index$/, ''),
+    type: 'post',
+    title: post.data.title || '',
+    artist: artistStr,
+    timestamp: timeData.timestamp,
+    displayDate: timeData.display,
+    coverImage: post.data.coverImage?.src || '',
+  };
+}));
+processedPosts.sort((a, b) => b.timestamp - a.timestamp);
+
+const processedWorks = await Promise.all(worksData.map(async (work) => {
+  const timeData = parseTimeField(work.data.time);
+  const artistStr = await parseArtistsField(work.data.artists);
+  return {
+    id: work.id.replace(/\/index$/, ''),
+    type: 'work',
+    title: work.data.title || '',
+    artist: artistStr,
+    timestamp: timeData.timestamp,
+    displayDate: timeData.display,
+    coverImage: work.data.coverImage?.src || '',
+  };
+}));
+processedWorks.sort((a, b) => b.timestamp - a.timestamp);
+
+const processedArtists = await Promise.all(artistsData.map(async (artist) => {
+  return {
+    id: artist.id.replace(/\/index$/, ''),
+    type: 'artist',
+    name: artist.data.name || '',
+    coverImage: artist.data.coverImage?.src || '',
+  };
+}));
+---
+
+<Layout>
+    <section class="index">
+        <article class="collections-wrapper">
+            {processedPosts.length > 0 && (
+                <div class="collection-list" data-section="posts">
+                    <h2>Posts</h2>
+                    <div class="sortable-table">
+                        <table>
+                            <thead>
+                            <tr>
+                                <th data-type="string">Title <span class="indicator"></span></th>
+                                <th data-type="number" class="desc">Date <span class="indicator"></span></th>
+                                <th data-type="string">Artist <span class="indicator"></span></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                                {processedPosts.map(post => (
+                                    <tr>
+                                    <td data-value={post.title}>
+                                        {/* 💡 data-image 속성에 이미지 경로를 심어둡니다 */}
+                                        <a href={`/${post.type}s/${post.id}`} data-image={post.coverImage}>{post.title}</a>
+                                    </td>
+                                    <td data-value={post.timestamp}>{post.displayDate}</td>
+                                    <td data-value={post.artist}>{post.artist}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {processedWorks.length > 0 && (
+                <div class="collection-list" data-section="works">
+                    <h2>Works</h2>
+                    <div class="sortable-table">
+                        <table>
+                            <thead>
+                            <tr>
+                                <th data-type="string">Title <span class="indicator"></span></th>
+                                <th data-type="number" class="desc">Date <span class="indicator"></span></th>
+                                <th data-type="string">Artist <span class="indicator"></span></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {processedWorks.map(work => (
+                                <tr>
+                                <td data-value={work.title}>
+                                    <a href={`/${work.type}s/${work.id}`} data-image={work.coverImage}>{work.title}</a>
+                                </td>
+                                <td data-value={work.timestamp}>{work.displayDate}</td>
+                                <td data-value={work.artist}>{work.artist}</td>
+                                </tr>
+                            ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {processedArtists.length > 0 && (
+                <div class="collection-list" data-section="artists">
+                    <h2>Artists</h2>
+                    <div class="sortable-table">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th data-type="string">Name <span class="indicator"></span></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {processedArtists.map(artist => (
+                            <tr>
+                            <td data-value={artist.name}>
+                                <a href={`/${artist.type}s/${artist.id}`} data-image={artist.coverImage}>{artist.name}</a>
+                            </td>
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+            )}
+        </article>
+
+        {/* 💡 2. 컬렉션 영역과 필터 영역 사이의 고정형 미리보기 이미지 패널 */}
+        <div class="preview-panel">
+            <div id="preview-container" class="preview-empty">
+                <img id="preview-img" src="" alt="Preview" />
+            </div>
+        </div>
+
+        <aside class="collection-filters">
+            <div class="filters-header">
+                <h3>Filters</h3>
+                <button type="button" id="clear-filters" aria-label="Clear filters">
+                    <svg viewBox="0 -1.5 130 130" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g clip-path="url(#clip0)"> <path d="M62.3649 76.0626C51.1451 86.1072 40.1732 95.8365 29.311 105.687C23.0183 111.394 16.9509 117.348 10.6729 123.069C9.0008 124.632 7.07937 125.903 4.98785 126.828C3.95649 127.261 1.72933 126.828 1.22143 126.035C0.549397 124.982 0.748089 123.114 1.11261 121.74C1.37779 120.738 2.45753 119.908 3.27208 119.104C18.7627 103.852 34.2604 88.6091 49.7649 73.3765C51.5045 71.6681 53.2942 70.0117 55.293 68.1144C48.5175 60.6052 41.7314 53.3593 35.2529 45.844C24.9134 33.8442 14.7813 21.6659 4.56355 9.56215C4.19212 9.12226 3.87261 8.64079 3.49773 8.20091C1.70969 6.08722 0.449103 3.80904 2.48505 1.24507C4.00964 -0.674661 7.65428 -0.387934 10.1921 2.22366C16.5124 8.7258 22.6693 15.3855 28.7745 22.0963C39.9226 34.3429 50.9837 46.6692 62.092 58.9522C62.5675 59.399 63.0731 59.8124 63.6053 60.1895C72.1948 51.9798 80.6892 43.7969 89.2545 35.6841C99.1881 26.2803 109.157 16.9135 119.16 7.58361C122.912 4.07666 125.921 3.44455 128.224 5.49071C130.61 7.61046 130.388 11.1519 126.582 14.9489C116.293 25.2161 105.755 35.2339 95.2268 45.2629C87.2065 52.9054 79.0583 60.4164 70.5224 68.3992C77.4586 75.5733 84.0927 82.724 91.0479 89.5439C97.7284 96.0945 104.782 102.265 111.594 108.681C114.257 111.095 116.751 113.69 119.058 116.449C120.918 118.763 121.193 121.636 118.906 123.919C116.652 126.17 114.043 125.375 111.869 123.67C107.71 120.58 103.724 117.264 99.9275 113.736C88.3069 102.355 76.8913 90.7657 65.4012 79.2517C64.4925 78.3424 63.6243 77.3883 62.3649 76.0626Z" fill="#7b0513"></path> </g> <defs> <clipPath id="clip0"> <rect width="129" height="127" fill="white" transform="translate(0.777344)"></rect> </clipPath> </defs> </g></svg>
+                </button>
+            </div>
+            
+            <label class="filter-label">
+              <input type="checkbox" class="collection-filter-checkbox" value="posts"> Posts
+            </label>
+            <label class="filter-label">
+              <input type="checkbox" class="collection-filter-checkbox" value="works"> Works
+            </label>
+            <label class="filter-label">
+              <input type="checkbox" class="collection-filter-checkbox" value="artists"> Artists
+            </label>
+        </aside>
+    </section>
+</Layout>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // 💡 3. 호버 시 중앙 미리보기 영역에 이미지 토글하는 로직
+    const previewContainer = document.getElementById('preview-container');
+    const previewImg = document.getElementById('preview-img') as HTMLImageElement;
+
+    // 테이블 내부의 모든 a 태그를 감시합니다 (정렬 후에도 유지되도록 document 상단 위임 가능)
+    document.addEventListener('mouseover', (e) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'A' && target.hasAttribute('data-image')) {
+        const imgSrc = target.getAttribute('data-image');
+        if (imgSrc && imgSrc.trim() !== '') {
+          previewImg.src = imgSrc;
+          previewContainer?.classList.add('has-image');
+        } else {
+          previewImg.src = '';
+          previewContainer?.classList.remove('has-image');
+        }
+      }
+    });
+
+    document.addEventListener('mouseout', (e) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'A' && target.hasAttribute('data-image')) {
+        previewImg.src = '';
+        previewContainer?.classList.remove('has-image');
+      }
+    });
+
+    // 기존 체크박스 필터링 로직
+    const filterCheckboxes = document.querySelectorAll('.collection-filter-checkbox');
+    const sections = document.querySelectorAll('.collection-list');
+
+    function updateVisibility() {
+      const checkedValues = Array.from(filterCheckboxes)
+                                 .filter((cb: any) => cb.checked)
+                                 .map((cb: any) => cb.value);
+
+      if (checkedValues.length === 0) {
+        sections.forEach((sec: any) => sec.style.display = '');
+      } else {
+        sections.forEach((sec: any) => {
+          const sectionType = sec.getAttribute('data-section');
+          if (checkedValues.includes(sectionType)) {
+            sec.style.display = '';
+          } else {
+            sec.style.display = 'none';
+          }
+        });
+      }
+    }
+
+    filterCheckboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', updateVisibility);
+    });
+
+    const clearBtn = document.getElementById('clear-filters');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        filterCheckboxes.forEach((cb: any) => cb.checked = false);
+        updateVisibility();
+      });
+    }
+
+    // 기존 테이블 헤더 클릭 정렬 로직
+    const tables = document.querySelectorAll('.sortable-table');
+        tables.forEach(table => {
+        const headers = table.querySelectorAll('th');
+        const tbody = table.querySelector('tbody');
+
+        if (!tbody) return;
+
+        headers.forEach((header, index) => {
+            header.addEventListener('click', () => {
+            const type = header.getAttribute('data-type');
+            const isAsc = header.classList.contains('asc');
+            const direction = isAsc ? -1 : 1;
+
+            // 같은 테이블 내의 다른 헤더 초기화
+            headers.forEach(h => h.classList.remove('asc', 'desc'));
+            header.classList.add(isAsc ? 'desc' : 'asc');
+
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
+            rows.sort((a, b) => {
+                const cellA = a.children[index] as HTMLElement;
+                const cellB = b.children[index] as HTMLElement;
+                
+                // 만약 구조적 이유로 자식 인덱스가 어긋날 경우를 대비한 안전 장치
+                if (!cellA || !cellB) return 0;
+
+                const valA = cellA.getAttribute('data-value') || cellA.textContent?.trim() || '';
+                const valB = cellB.getAttribute('data-value') || cellB.textContent?.trim() || '';
+
+                if (type === 'number') {
+                return (parseFloat(valA) || 0) - (parseFloat(valB) || 0) * direction;
+                } else {
+                return valA.localeCompare(valB) * direction;
+                }
+            });
+
+            // 기존 행 비우고 정렬된 순서대로 다시 삽입
+            tbody.innerHTML = '';
+            rows.forEach(row => tbody.appendChild(row));
+            });
+        });
+        });
+    });
+</script>
+
+<style>
+.indicator {
+  display: inline-block;
+  width: 1em;
+  font-size: 0.8em;
+  margin-left: 4px;
+  opacity: 0.3;
+}
+
+th.asc .indicator::after { content: '▲'; }
+th.desc .indicator::after { content: '▼'; }
+
+th.asc .indicator, th.desc .indicator {
+  opacity: 1;
+  color: #7b0513;
+}
+
+</style>

@@ -1,0 +1,84 @@
+---
+// src/components/GlobalImage.astro
+import { Image } from 'astro:assets';
+
+// 💡 Props를 통해 외부 컴포넌트(RowImages 등)에서 스타일을 직접 주입받을 수 있게 열어둡니다.
+interface Props {
+  src: any;
+  alt?: string;
+  imgStyle?: Record<string, any> | string;
+  imgClass?: string;
+}
+
+const { src, alt = "Image", imgStyle, imgClass = "" } = Astro.props;
+
+let resolvedSrc = src;
+if (resolvedSrc instanceof Promise) {
+  resolvedSrc = await resolvedSrc;
+}
+
+const R2_DOMAIN = import.meta.env.PUBLIC_R2_DOMAIN || '';
+const isDev = import.meta.env.DEV;
+const useR2 = !isDev && R2_DOMAIN !== '';
+
+const isString = typeof resolvedSrc === 'string';
+const isObject = typeof resolvedSrc === 'object' && resolvedSrc !== null;
+
+let finalImageSrc = ''; 
+let finalAstroImage = null; 
+
+let rawPathForR2 = '';
+if (isString) {
+  rawPathForR2 = resolvedSrc;
+} else if (isObject && resolvedSrc.src) {
+  rawPathForR2 = resolvedSrc.src; 
+}
+const fileName = rawPathForR2 ? rawPathForR2.split('/').pop()?.split('?')[0] : '';
+
+if (useR2 && fileName) {
+  finalImageSrc = `${R2_DOMAIN}/works/${fileName}`;
+} else {
+  if (isObject && 'src' in resolvedSrc) {
+    finalAstroImage = resolvedSrc;
+  } else if (isString) {
+    const marker = 'assets/images';
+    const idx = resolvedSrc.indexOf(marker);
+    if (idx !== -1) {
+      const relativePath = resolvedSrc.substring(idx + marker.length);
+      const imagePath = `/src/assets/images${relativePath}`;
+      
+      const images = import.meta.glob<{ default: ImageMetadata }>('/src/assets/images/**/*.{jpeg,jpg,png,webp,avif}');
+      const imageModule = images[imagePath];
+      
+      if (imageModule) {
+        const mod = await imageModule();
+        finalAstroImage = mod.default;
+      } else {
+        finalImageSrc = resolvedSrc; 
+      }
+    } else {
+      finalImageSrc = resolvedSrc; 
+    }
+  }
+}
+
+// 💡 밖에서 imgStyle을 안 주면 기본 스타일을 먹이고, 주면 받은 걸 그대로 씁니다.
+const defaultStyle = { maxWidth: '100%', height: 'auto' };
+const appliedStyle = imgStyle || defaultStyle;
+---
+
+{finalAstroImage ? (
+  <Image src={finalAstroImage} alt={alt || "이미지"}
+    widths={[400, 800, 1200]}
+    sizes="(max-width: 768px) 100vw, 800px"
+    format="webp"
+    style={appliedStyle}
+    class={imgClass}
+    inferSize={true}/>
+) : finalImageSrc ? (
+  <img src={finalImageSrc} alt={alt || "이미지"} loading="lazy" style={appliedStyle} class={imgClass} />
+) : (
+  <div style="padding: 1rem; border: 1px dashed red; color: red;">
+    ⚠️ 이미지를 불러올 수 없거나 경로가 비어있습니다.
+  </div>
+)}

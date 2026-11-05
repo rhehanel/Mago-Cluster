@@ -1,0 +1,121 @@
+---
+interface Props {
+  url?: any;
+  link?: any;
+  displayType?: 'block' | 'inline';
+  widthType?: 'full' | 'custom';
+  customWidth?: string;
+}
+
+const props = Astro.props;
+
+// 전달된 모든 Props 객체/배열/문자열을 샅샅이 뒤져서 URL 문자열만 찾아내는 유틸리티
+function extractRawUrl(input: any): string {
+  if (!input) return '';
+  if (typeof input === 'string') return input;
+  if (typeof input === 'object') {
+    if (typeof input.url === 'string') return input.url;
+    if (typeof input.link === 'string') return input.link;
+    if (typeof input.value === 'string') return input.value;
+
+    for (const key of Object.keys(input)) {
+      const found = extractRawUrl(input[key]);
+      if (found && (found.includes('youtube') || found.includes('youtu.be') || found.includes('drive.google.com') || found.startsWith('http'))) {
+        return found;
+      }
+    }
+  }
+  return '';
+}
+
+const rawUrl = extractRawUrl(props);
+const displayType = props.displayType || 'block';
+const widthType = props.widthType || 'full';
+const customWidth = props.customWidth;
+
+function getEmbedUrl(inputUrl: string): string {
+  if (!inputUrl) return '';
+  const cleanUrl = inputUrl.trim();
+
+  // 1. YouTube 주소 파싱 (일반 watch, short link youtu.be, shorts, embed 모두 대응)
+  const ytMatch = cleanUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})/);
+  if (ytMatch && ytMatch[1]) {
+    return `https://www.youtube.com/embed/${ytMatch[1]}`;
+  }
+
+  // 2. Google Drive 공유주소 파싱 (/file/d/ID/view -> /file/d/ID/preview 자동 변환)
+  const driveMatch = cleanUrl.match(/drive\.google\.com\/file\/d\/([^\/\?]+)/);
+  if (driveMatch && driveMatch[1]) {
+    return `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
+  }
+
+  // 3. 이미 embed 형태인 링크
+  if (cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) {
+    return cleanUrl;
+  }
+
+  return '';
+}
+
+const embedUrl = getEmbedUrl(rawUrl);
+const containerWidth = widthType === 'full' ? '100%' : (customWidth || '640px');
+---
+
+<div class={`video-wrapper ${displayType}`} style={`--video-width: ${containerWidth};`}>
+  {embedUrl ? (
+    <div class="iframe-container">
+      <iframe
+        src={embedUrl}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen
+      />
+    </div>
+  ) : (
+    <div class="video-error">
+      ⚠️ Please enter a valid video URL.
+    </div>
+  )}
+</div>
+
+<style>
+  .video-wrapper.block {
+    display: block;
+    width: var(--video-width);
+    max-width: 100%;
+    margin: 1.5rem 0;
+  }
+
+  .video-wrapper.inline {
+    display: inline-block;
+    width: var(--video-width);
+    max-width: 100%;
+    margin: 0.5rem;
+    vertical-align: middle;
+  }
+
+  .iframe-container {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%; /* 16:9 비율 유지 */
+    background-color: #000;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .iframe-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  .video-error {
+    padding: 1rem;
+    background-color: #f8d7da;
+    color: #721c24;
+    font-size: 0.9rem;
+    border-radius: 4px;
+  }
+</style>

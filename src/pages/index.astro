@@ -1,0 +1,108 @@
+---
+import { getCollection } from 'astro:content';
+import { getImage } from 'astro:assets';
+import Layout from '../layouts/Layout.astro';
+import { createReader } from '@keystatic/core/reader';
+import keystaticConfig from '../../keystatic.config';
+
+export const prerender = true;
+
+const posts = await getCollection('posts');
+const works = await getCollection('works');
+
+// 💡 터미널(VS Code 하단 창)에 뭐라고 찍히는지 확인!
+console.log('불러온 포스트 개수:', posts.length);
+console.log('불러온 워크 개수:', works.length);
+
+// 1. 모든 아이템 통합 및 연도 정렬
+const allItems = [
+  ...posts.map(post => ({ ...post, type: 'post' })),
+  ...works.map(work => ({ ...work, type: 'work' }))
+];
+
+const reader = createReader(process.cwd(), keystaticConfig);
+const settings = await reader.singletons.settings.read();
+
+const sortedItems = allItems.sort(() => Math.random() - 0.5);
+
+// 2. ⭐️ 비동기 이미지 처리를 HTML 밖(Script)에서 안전하게 완결
+const itemsWithImages = await Promise.all(
+  sortedItems.map(async (item) => {
+    let optimizedImgSrc = null;
+    let imgWidth = null;
+    let imgHeight = null;
+
+    const cover = item.data.coverImage;
+
+    // A. 이미지 데이터가 Astro 에셋 객체(width, height 존재)인 경우
+    if (cover && typeof cover === 'object' && 'width' in cover && 'height' in cover) {
+      try {
+        const originalWidth = cover.width;
+        const originalHeight = cover.height;
+        const isVertical = originalWidth > originalHeight;
+
+        const targetWidth = isVertical && originalWidth > 450 ? 450 :
+          !isVertical && originalWidth > 300 ? 300 : originalWidth;
+        const targetHeight = Math.round((originalHeight / originalWidth) * targetWidth);
+
+        const res = await getImage({
+          src: cover,
+          width: targetWidth,
+          height: targetHeight,
+          format: 'webp',
+        });
+        
+        optimizedImgSrc = res.src;
+        imgWidth = res.attributes.width;
+        imgHeight = res.attributes.height;
+      } catch (e) {
+        console.error('Image optimization failed for:', item.id, e);
+      }
+    } 
+    // B. 이미지 데이터가 일반 문자열(경로/URL)인 경우
+    else if (typeof cover === 'string') {
+      optimizedImgSrc = cover;
+    }
+
+    // 슬러그 뒤의 /index 꼬리 제거
+    const cleanSlug = item.id.replace(/\/index$/, '');
+
+    return {
+      ...item,
+      cleanSlug,
+      optimizedImgSrc,
+      imgWidth,
+      imgHeight,
+    };
+  })
+);
+---
+
+<Layout>
+  { settings?.title ? <h1 class="indexTitle">{settings?.title}</h1> : '' }
+  <section>
+    <ul class="imgList">
+      {
+        // 3. HTML 렌더링 부분: 비동기 로직 없이 순수 렌더링만 진행
+        itemsWithImages.map((item) => (
+          <li style="margin-bottom: 2rem;">
+            <a href={`/${item.type}s/${item.cleanSlug}`} style="display: block; margin-top: 8px;">
+              {/* 이미지가 존재하면 렌더링 */}
+              {item.optimizedImgSrc ? (
+                <img
+                  src={item.optimizedImgSrc} 
+                  alt={item.data.title}
+                  width={item.imgWidth || undefined}
+                  height={item.imgHeight || undefined}
+                  loading="lazy"
+                  style="display: block; margin-bottom: 8px; max-width: 100%; height: auto;"
+                />
+              ) : item.data.title }
+            </a>
+            {item.data.title}
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</Layout>

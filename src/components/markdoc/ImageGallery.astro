@@ -1,0 +1,111 @@
+---
+interface ImageItem {
+  file: string;
+  link?: string;
+}
+
+interface Props {
+  images: ImageItem[];
+  align?: 'left' | 'center' | 'right';
+  flexAlign?: string;
+  displayType?: 'block' | 'inline';
+  widthType?: 'full' | 'custom';
+  customWidth?: string;
+  direction?: 'row' | 'column';
+}
+
+const {
+  images = [],
+  align = 'center',
+  flexAlign = 'center',
+  displayType = 'block',
+  widthType = 'full',
+  customWidth,
+  direction = 'row',
+} = Astro.props;
+
+const containerWidth = widthType === 'full' ? '100%' : (customWidth || '100%');
+---
+
+<div class={`gallery-wrapper ${displayType} align-${align}`} style={`--gallery-width: ${containerWidth};`}>
+  <div 
+    class="image-gallery" 
+    style={`justify-content: ${flexAlign}; flex-direction: ${direction};`}
+  >
+    {images.map((item) => (
+      <div class="gallery-item">
+        {item.link ? (
+          <a href={item.link} target="_blank" rel="noopener noreferrer">
+            <img src={item.file} alt="" />
+          </a>
+        ) : (
+          <img src={item.file} alt="" />
+        )}
+      </div>
+    ))}
+  </div>
+</div>
+
+<style>
+  .gallery-wrapper {
+    width: var(--gallery-width);
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* 1. Block Display (한 줄을 혼자 차지하는 모드) */
+  .gallery-wrapper.block {
+    display: block;
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+    clear: both; /* 이전 inline float 요소가 있다면 줄바꿈 보장 */
+  }
+  .gallery-wrapper.block.align-left {
+    margin-left: 0;
+    margin-right: auto;
+  }
+  .gallery-wrapper.block.align-center {
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .gallery-wrapper.block.align-right {
+    margin-left: auto;
+    margin-right: 0;
+  }
+
+  /* 2. Inline Display (텍스트가 옆으로 흐르는 모드) */
+  .gallery-wrapper.inline.align-left {
+    float: left;
+    margin: 0 1.5rem 0.5rem 0;
+  }
+  .gallery-wrapper.inline.align-right {
+    float: right;
+    margin: 0 0 0.5rem 1.5rem;
+  }
+  .gallery-wrapper.inline.align-center {
+    /* 텍스트가 양옆으로 흐르는 것은 불가능하므로, 중앙 정렬 시에는 인라인 블록으로 중앙에 배치 */
+    display: inline-block;
+    vertical-align: middle;
+    margin: 0.5rem 1rem;
+  }
+
+  /* 내부 플렉스 컨테이너 */
+  .image-gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    width: 100%;
+  }
+
+  .gallery-item {
+    flex: 1 1 auto;
+    max-width: 100%;
+  }
+
+  .gallery-item img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+</style>

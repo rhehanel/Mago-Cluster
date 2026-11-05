@@ -1,0 +1,142 @@
+---
+import ImageWithLink from './ImageWithLink.astro';
+import VideoPlayer from './VideoPlayer.astro';
+import ManualList from './ManualList.astro';
+import ColumnImages from './ColumnImages.astro';
+import RowImages from './RowImages.astro';
+
+interface Props {
+  blocks?: any[];
+  Content: any;
+  markdocWidth?: string;
+  markdocHeight?: string;
+  markdocMargin?: string;
+}
+
+const {
+  blocks = [],
+  Content,
+  markdocWidth = '100%',
+  markdocHeight = 'max-content',
+  markdocMargin = 'unset',
+} = Astro.props;
+
+// Markdoc은 페이지당 하나의 본문이므로 첫 번째 위치 표시자만 사용한다.
+const firstMarkdocIndex = blocks.findIndex(
+  (item: any) => item?.discriminant === 'markdoc',
+);
+
+const markdocStyle = {
+  width: markdocWidth,
+  margin: markdocMargin,
+};
+const markdocInnerStyle = {
+  height: markdocHeight,
+};
+---
+
+<div class="ordered-content">
+  {/* 기존 데이터에 markdoc 위치 표시자가 없을 때는 본문을 맨 앞에 둔다. */}
+  {firstMarkdocIndex === -1 && (
+    <section class="markdoc-content" style={markdocStyle}>
+      <div class="overflow-box" style={markdocInnerStyle}>
+        <Content />
+      </div>
+    </section>
+  )}
+
+  {blocks.map((item: any, index: number) => {
+    const value = item?.value ?? {};
+
+    if (item?.discriminant === 'markdoc') {
+      if (index !== firstMarkdocIndex) return null;
+
+      return (
+        <section class="markdoc-content" style={markdocStyle}>
+          <div class="overflow-box" style={markdocInnerStyle}>
+            <Content />
+          </div>
+        </section>
+      );
+    }
+
+    switch (item?.discriminant) {
+      case 'video':
+        return <VideoPlayer link={value} />;
+
+      case 'image':
+        return <ImageWithLink image={value} />;
+
+      case 'manualList':
+        return <ManualList data={value} />;
+
+      case 'columnImages':
+        return <ColumnImages columnImages={value} />;
+
+      case 'rowImages':
+        return <RowImages rowImages={value} />;
+
+      default:
+        return null;
+    }
+  })}
+</div>
+
+<style is:global>
+  #Content {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 0.4rem;
+    gap: 0.4rem;
+    justify-content: flex-start;
+    align-items: flex-start;
+    align-content: flex-start;
+  }
+
+  #Content > article {
+    min-width: 10%;
+    border: 1px solid #7b0513;
+  }
+
+  .markdoc-content {
+    box-sizing: border-box;
+    max-width: 100%;
+    padding: 0.6rem;
+    font-size: 0.8rem;
+    line-height: 1.15rem;
+    background-color: rgb(212 121 121 / 1);
+    background:
+      linear-gradient(rgb(212 121 121 / 1), rgb(212 121 121 / 1)) center / calc(100% - 20px) calc(100% - 20px) no-repeat,
+      radial-gradient(circle at bottom left, rgb(212 121 121 / 1), rgb(212 121 121 / 0) 60%) top right / 10px 10px no-repeat,
+      radial-gradient(circle at bottom right, rgb(212 121 121 / 1), rgb(212 121 121 / 0) 60%) top left / 10px 10px no-repeat,
+      radial-gradient(circle at top right, rgb(212 121 121 / 1), rgb(212 121 121 / 0) 60%) bottom left / 10px 10px no-repeat,
+      radial-gradient(circle at top left, rgb(212 121 121 / 1), rgb(212 121 121 / 0) 60%) bottom right / 10px 10px no-repeat,
+      linear-gradient(to left, rgb(212 121 121 / 0), rgb(212 121 121 / 1)) right center / 10px calc(100% - 20px) no-repeat,
+      linear-gradient(to right, rgb(212 121 121 / 0), rgb(212 121 121 / 1)) left center / 10px calc(100% - 20px) no-repeat,
+      linear-gradient(to bottom, rgb(212 121 121 / 0), rgb(212 121 121 / 1)) top center / calc(100% - 20px) 10px no-repeat,
+      linear-gradient(to top, rgb(212 121 121 / 0), rgb(212 121 121 / 1)) bottom center / calc(100% - 20px) 10px no-repeat;
+  }
+
+  .markdoc-content .overflow-box {
+    box-sizing: border-box;
+    max-width: 100%;
+    overflow-y: auto;
+    padding: 0.2rem 0.5rem;
+    scrollbar-color: auto;
+    scrollbar-width: auto;
+  }
+
+  .markdoc-content .overflow-box::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  .markdoc-content .overflow-box::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 5px;
+  }
+
+  .markdoc-content .overflow-box::-webkit-scrollbar-thumb {
+    border-radius: 5px;
+    background-color: #7b0513;
+  }
+</style>

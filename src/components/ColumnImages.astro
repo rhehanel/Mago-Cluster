@@ -1,0 +1,108 @@
+---
+import GlobalImage from './GlobalImage.astro';
+
+export interface ColumnImageItem {
+  image: string;
+  link?: string;
+  size?: number | null;
+  border?: boolean;
+}
+
+interface Props {
+  columnImages?: any;
+}
+
+const { columnImages } = Astro.props;
+
+// 1. 너비 설정
+const containerWidth = columnImages?.width?.value;
+
+// 2. 정렬 및 풀위스 여부 설정
+const isFullWidth = columnImages?.alignment?.discriminant === true;
+const alignment = isFullWidth ? 'full' : (columnImages?.alignment?.value || 'left');
+
+// 3. 높이 및 스크롤 설정
+const useScroll = columnImages?.height?.discriminant === true;
+const containerHeight = useScroll 
+  ? (columnImages?.height?.value as { height?: string })?.height || 'auto' 
+  : 'max-content';
+
+// 4. 이미지 데이터 추출 (Keystatic 스키마 기준)
+const images = Array.isArray(columnImages?.images) ? columnImages.images : [];
+---
+
+<div 
+    class={`column-images-container ${alignment}`}
+    style={{
+        width: containerWidth ? containerWidth : '30%',
+        height: containerHeight,
+        overflowY: useScroll ? 'scroll' : 'visible',
+        border: useScroll ? '1px solid #7b0513' : 'none',
+        padding: useScroll ? '0.4rem' : '0', // none 대신 0 사용 권장
+        background: useScroll ? '#d47979aa' : 'transparent',
+    }}>
+    {images.map((item: any) => {
+        const imgWidth = item.size;
+        const hideBorder = item.border === true;
+        
+        // 💡 Keystatic 값을 기반으로 GlobalImage에 넘겨줄 스타일 생성
+        const customImgStyle = {
+          width: '100%',
+          height: 'auto',
+          display: 'block',
+          objectFit: 'cover',
+          border: hideBorder ? 'none' : '1px solid #7b0513'
+        };
+
+        return (
+        <div class="image-item" style={{ width: isFullWidth ? '100%' : imgWidth }}>
+            {item.link ? (
+            <a href={item.link} target="_blank" rel="noopener noreferrer" class="image-link">
+                <GlobalImage src={item.image} alt="Column Image" imgStyle={customImgStyle} />
+            </a>
+            ) : (
+            <GlobalImage src={item.image} alt="Column Image" imgStyle={customImgStyle} />
+            )}
+        </div>
+        );
+    })}
+</div>
+
+<style>
+  .column-images-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  /* 정렬별 레이아웃 분기 */
+  .column-images-container.left {
+    align-items: flex-start;
+  }
+  .column-images-container.center {
+    align-items: center;
+  }
+  .column-images-container.right {
+    align-items: flex-end;
+  }
+  .column-images-container.full {
+    align-items: stretch;
+  }
+
+  .images-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    width: 100%;
+  }
+
+  .image-item {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .image-link {
+    display: block;
+    width: 100%;
+  }
+</style>

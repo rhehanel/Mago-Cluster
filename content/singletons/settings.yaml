@@ -1,0 +1,6 @@
+title: Mago Cluster
+description: Mago Cluster Cluster Cluster++
+favicon: ../../src/assets/favicon/favicon.jpg
+navigation:
+  - label: Index
+    href: /index

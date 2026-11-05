@@ -1,0 +1,44 @@
+---
+import { getCollection, getEntry, render } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import OrderedContent from '../../components/OrderedContent.astro';
+
+export const prerender = true;
+
+const { slug } = Astro.params;
+if (!slug) throw new Error('Slug not found');
+
+const allScraps = await getCollection('scraps');
+const scrap =
+  allScraps.find(
+    (item) => item.id === slug || item.data?.slug === slug,
+  ) || (await getEntry('scraps', slug));
+
+if (!scrap) throw new Error(`No post found for slug: ${slug}`);
+
+const { Content } = await render(scrap);
+const blocks = scrap.data.blocks ?? [];
+---
+
+<Layout title={scrap.data.title}>
+  <article class="scrap-container">
+    <h1>{scrap.data.title}</h1>
+    <p>{scrap.data.time}</p>
+
+    <OrderedContent
+      blocks={blocks}
+      Content={Content}
+      markdocWidth="100%"
+      markdocHeight="max-content"
+      markdocMargin="unset"
+    />
+  </article>
+</Layout>
+
+<style>
+  .scrap-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+</style>

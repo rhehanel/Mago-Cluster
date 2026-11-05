@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "slug": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "array",
+      "items": {}
+    },
+    "people": {},
+    "coverImage": {
+      "type": "string"
+    },
+    "time": {},
+    "blocks": {},
+    "markdocSize": {},
+    "manualList": {},
+    "columnImages": {},
+    "rowImages": {},
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "title"
+  ]
+}

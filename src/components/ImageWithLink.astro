@@ -1,0 +1,52 @@
+---
+import GlobalImage from './GlobalImage.astro';
+
+interface Props {
+  image: {
+    image: string;
+    link?: string;
+    size?: number | null;
+    border?: boolean;
+  };
+}
+
+const { image: blockValue } = Astro.props;
+const imagePath = blockValue?.image;
+const linkUrl = blockValue?.link;
+
+// size 값이 없으면 기본 100%
+const imageWidth = blockValue?.size ? `${blockValue.size}` : '30%';
+
+const isBorder = blockValue?.border ? 'none !important' : '1px solid #7b0513';
+
+// 💡 GlobalImage 내부 img 태그로 주입될 스타일 객체
+const customImgStyle = {
+  width: '100%',
+  height: 'auto',
+  display: 'block'
+};
+---
+
+<article class="image-with-link" style={{ width: imageWidth, border: isBorder }}>
+  {linkUrl ? (
+    <a href={linkUrl} target="_blank" rel="noopener noreferrer">
+      <GlobalImage src={imagePath} alt="Work Image" imgStyle={customImgStyle} />
+    </a>
+  ) : (
+    <GlobalImage src={imagePath} alt="Work Image" imgStyle={customImgStyle} />
+  )}
+</article>
+
+<style>
+  .image-with-link {
+    max-width: 100%;
+    /* 레이아웃에 맞춰 inline-block이나 block을 선택하세요 */
+    display: inline-block; 
+  }
+  
+  /* a 태그가 이미지를 감싸고 있을 때를 대비한 처리 */
+  .image-with-link a {
+    display: block;
+    width: 100%;
+  }
+</style>

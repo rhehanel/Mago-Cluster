@@ -1,0 +1,65 @@
+---
+interface Props {
+  file?: any;
+  displayType?: 'full' | 'inline';
+  link?: string;
+  caption?: string;
+}
+
+const { file, displayType = 'full', link, caption } = Astro.props;
+
+let imageSrc = '';
+if (typeof file === 'string') {
+  imageSrc = file;
+} else if (file?.src) {
+  imageSrc = file.src;
+} else if (file?.filename) {
+  imageSrc = `../../assets/images/scraps/${file.filename}`;
+}
+---
+
+<div class={`image-container ${displayType}`}>
+  {imageSrc ? (
+    link ? (
+      <a href={link} target="_blank" rel="noopener noreferrer">
+        <img src={imageSrc} alt={caption || ''} />
+      </a>
+    ) : (
+      <img src={imageSrc} alt={caption || ''} />
+    )
+  ) : null}
+  {caption && <span class="caption">{caption}</span>}
+</div>
+
+<style>
+  .image-container.full {
+    display: block;
+    width: 100%;
+    margin: 1.5rem 0;
+  }
+  .image-container.full img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .image-container.inline {
+    display: inline-block;
+    max-width: 100%;
+    margin: 0.5rem;
+    vertical-align: middle;
+  }
+  .image-container.inline img {
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    display: inline-block;
+  }
+
+  .caption {
+    display: block;
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: 0.4rem;
+  }
+</style>

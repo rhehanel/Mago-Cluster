@@ -1,0 +1,199 @@
+---
+import { getCollection, render, getEntry } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import OrderedContent from '../../components/OrderedContent.astro';
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const allPosts = await getCollection('posts');
+
+  return allPosts.map((post) => {
+    const cleanSlug = post.id
+      .replace(/\/index$/, '')
+      .replace(/\.(mdoc|md|mdx)$/, '');
+
+    return {
+      params: { slug: cleanSlug },
+      props: { post },
+    };
+  });
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+const originalTitle = post.data.originaltitle;
+const title = post.data.title;
+
+function formatDate(dateInput: string | Date | undefined) {
+  if (!dateInput) return '';
+
+  // YYYY-MM-DD를 UTC 변환 없이 분해해 날짜가 하루 밀리는 문제를 피한다.
+  const match = String(dateInput).match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (match) {
+    const [, year, month, day] = match;
+    return `${year}. ${Number(month)}. ${String(day).padStart(2, '0')}`;
+  }
+
+  const date = new Date(dateInput);
+  if (Number.isNaN(date.getTime())) return '';
+
+  return `${date.getFullYear()}. ${date.getMonth() + 1}. ${String(
+    date.getDate(),
+  ).padStart(2, '0')}`;
+}
+
+const timeField = post.data.time;
+const primaryType = timeField?.discriminant;
+const primaryData = timeField?.value ?? {};
+
+let displayDate = '';
+let displayTime = '';
+
+if (primaryType === 'year') {
+  displayDate = primaryData.value || '';
+} else if (primaryType === 'date') {
+  displayDate = formatDate(primaryData.value);
+  displayTime = primaryData.time || '';
+} else if (primaryType === 'time') {
+  const isCustomDate = primaryData.discriminant === true;
+  const secondaryData = primaryData.value ?? {};
+
+  displayTime = secondaryData.time || '';
+
+  if (isCustomDate) {
+    displayDate = secondaryData.dates || '';
+  } else {
+    const startDate = formatDate(secondaryData.date);
+    const endDate = formatDate(secondaryData.enddate);
+    displayDate =
+      endDate && startDate !== endDate
+        ? `${startDate} ~ ${endDate}`
+        : startDate;
+  }
+}
+
+const people = post.data.people ?? [];
+const blocks = post.data.blocks ?? [];
+
+const processedPeople = await Promise.all(
+  people.map(async (item: any) => {
+    if (item.discriminant === 'list') {
+      const slug = item.value;
+      if (!slug) return null;
+
+      const peopleEntry = await getEntry('people', slug);
+
+      return {
+        type: 'list',
+        name: peopleEntry?.data?.name || slug,
+        href: `/people/${slug}`,
+      };
+    }
+
+    if (item.discriminant === 'text') {
+      const textData = item.value as { name?: string; link?: string };
+
+      return {
+        type: 'text',
+        name: textData?.name || '',
+        href: textData?.link || null,
+      };
+    }
+
+    return null;
+  }),
+);
+
+const peopleList = processedPeople.filter(Boolean);
+
+const markdocSizeField = post.data.markdocSize;
+const customMarkdocSize = markdocSizeField?.discriminant === true;
+const markdocSize = customMarkdocSize ? markdocSizeField.value ?? {} : {};
+
+const markdocWidth = markdocSize.width || '50%';
+const markdocHeight = markdocSize.height || 'max-content';
+const markdocMargin = markdocSize.margin === true ? '0 auto' : 'unset';
+---
+
+<Layout title={title}>
+  <div>
+    <section class="title">
+      {originalTitle ? (
+        <h1>{originalTitle}<br />{title}</h1>
+      ) : (
+        <h1>{title}</h1>
+      )}
+
+      {(displayDate || displayTime) && (
+        <div class={displayTime ? 'time-data flex' : 'time-data'}>
+          <span>☀︎</span>
+          <span>
+            {displayDate && <small>{displayDate}</small>}
+            {displayTime && <small>{displayTime}</small>}
+          </span>
+        </div>
+      )}
+
+      {peopleList.length > 0 && (
+        <ul class="people-list">
+          {peopleList.map((person: any) => (
+            <li>
+              <span>〠 </span>
+              {person.href ? (
+                <a href={person.href} class="person-link">
+                  {person.name}
+                </a>
+              ) : (
+                <span class="person-name">{person.name}</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+
+    <OrderedContent
+      blocks={blocks}
+      Content={Content}
+      markdocWidth={markdocWidth}
+      markdocHeight={markdocHeight}
+      markdocMargin={markdocMargin}
+    />
+  </div>
+</Layout>
+
+<style is:global>
+  header {
+    width: min-content;
+  }
+
+  .title {
+    width: max-content;
+    max-width: 81.2rem;
+    min-width: 30rem;
+    padding: 0.3rem 1rem 0.5rem 0.7rem;
+    margin-bottom: 0.4rem;
+    border: 1px solid #7b0513;
+    background: #7b0513ee;
+    color: #d47979;
+  }
+
+  .title h1 {
+    color: #d47979;
+  }
+
+  .title .time-data {
+    display: flex;
+    gap: 0.2rem;
+    font-size: 0.7rem;
+    color: #d47979;
+  }
+
+  .title .time-data small,
+  .title .time-data span {
+    display: block;
+    font-size: 0.7rem;
+  }
+</style>

@@ -1,0 +1,82 @@
+---
+export interface ManualListItem {
+  discriminant: 'text' | 'artist' | 'works' | 'posts' | 'tag';
+  value: { name?: string; link?: string } | string | null;
+}
+
+interface Props {
+  // 💡 데이터 구조가 object({ title, list })로 변경된 것을 반영합니다.
+  data?: {
+    title?: string;
+    list?: ManualListItem[];
+  };
+}
+
+const { data } = Astro.props;
+
+// 객체에서 title과 list 배열을 안전하게 꺼냅니다.
+const title = data?.title || '';
+const list = data?.list || [];
+---
+
+<article class="list-block">
+  {/* 💡 타이틀이 입력되었을 때만 출력합니다 */}
+  {title && <h3>{title}</h3>}
+
+  <ul class="manual-list">
+    {list.map((item) => {
+      // 1. 텍스트 블록인 경우
+      if (item.discriminant === 'text') {
+        const textData = item.value as { name?: string; link?: string };
+        const name = textData?.name || 'Untitled';
+        const link = textData?.link;
+
+        return (
+          <li>
+            <span class="badge">→</span>
+            {link ? <a href={link}>{name}</a> : <span>{name}</span>}
+          </li>
+        );
+      }
+
+      // 2. Relationship 블록인 경우 (artist, works, posts, tag)
+      const slug = typeof item.value === 'string' ? item.value : '';
+      const type = item.discriminant;
+
+      if (!slug) return null;
+
+      return (
+        <li>
+          <span class="badge">[{type}]</span>
+          <a href={`/${type}/${slug}`}>{slug}</a>
+        </li>
+      );
+    })}
+  </ul>
+</article>
+
+<style>
+  .list-block {
+    padding: 0.5rem;
+    font-size: 0.8rem;
+    font-size: 0.7rem;
+  }
+  .list-block h3 {
+    margin-bottom: 0.25rem;
+    font-size: 0.7rem;
+    color: #7b0513;
+    font-weight: 500;
+    text-decoration: underline;
+  }
+
+  .list-block li a {
+    text-decoration: underline;
+  }
+
+  .badge {
+    font-size: 0.75rem;
+    color: #7b0513;
+    margin-right: 0.3rem;
+    text-transform: uppercase;
+  }
+</style>

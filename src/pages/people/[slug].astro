@@ -1,0 +1,61 @@
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+
+export const prerender = true;
+
+// 1. Static Paths 생성 및 안전한 주소(slug) 변환
+export async function getStaticPaths() {
+  const allPeople = await getCollection('people');
+  
+  return allPeople.map(person => {
+    // 파일명에서 확장자 제거 (Hanel Lee.mdoc -> Hanel Lee)
+    const baseName = person.id.replace(/\.mdoc$/, '').replace(/\.md$/, '');
+    
+    // URL용 안전한 주소 생성: 소문자화 및 띄어쓰기를 하이픈으로 변경 (Hanel Lee -> hanel-lee)
+    const safeSlug = baseName.toLowerCase().replace(/\s+/g, '-');
+
+    return {
+      params: { slug: safeSlug }, 
+      // getEntry로 다시 찾을 필요 없이 person 객체 전체와 baseName을 props로 전달
+      props: { person, baseName },
+    };
+  });
+}
+
+// 2. 전달받은 props 사용
+const { person, baseName } = Astro.props;
+const { Content } = await render(person);
+
+// --- (선택) 아카이빙을 위한 역참조 로직 ---
+const allPosts = await getCollection('posts');
+const relatedPosts = allPosts.filter(post => {
+  const people = post.data.people || [];
+  return people.some((person: any) => 
+    person.discriminant === 'list' && person.value === baseName
+  );
+});
+---
+
+<Layout title={person.data.name}>
+  <h1>{person.data.name}</h1>
+  <Content />
+
+  {/* 관련된 포스트가 있을 경우 하단에 리스트로 출력 */}
+  {relatedPosts.length > 0 && (
+    <section style="margin-top: 3rem; border-top: 1px solid #ccc; padding-top: 1rem;">
+      <h2>관련된 포스트</h2>
+      <ul>
+        {relatedPosts.map(post => {
+          // 포스트 파일명에서도 확장자를 제거하여 링크 생성
+          const postSlug = post.id.replace(/\.mdoc$/, '').replace(/\.md$/, '');
+          return (
+            <li>
+              <a href={`/posts/${postSlug}`}>{post.data.title}</a>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  )}
+</Layout>

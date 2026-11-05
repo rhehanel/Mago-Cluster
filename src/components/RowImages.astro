@@ -1,0 +1,114 @@
+---
+import GlobalImage from './GlobalImage.astro';
+
+interface Props {
+  rowImages?: any;
+}
+
+const { rowImages } = Astro.props;
+
+// 1. 컨테이너 너비 설정
+const containerWidth = rowImages?.width?.value || '100%';
+
+// 2. 가로 정렬 및 풀위스(Full Width) 설정
+const isFullWidth = rowImages?.alignment?.discriminant === true;
+const alignValue = rowImages?.alignment;
+let justifyContent = 'flex-start';
+let isStretch = false;
+if (alignValue === 'center'){ justifyContent = 'center' 
+  } else if (alignValue === 'flex-end') { justifyContent = 'baseline'
+  } else if (alignValue === 'stretch') { justifyContent = 'stretch', isStretch = true
+  } else justifyContent = 'flex-start' ;
+
+
+// 3. ⭐️ 스크롤 및 높이 설정 (핵심 변경 사항)
+// discriminant가 true면 스크롤 사용(Use Scroll), false면 스크롤 미사용
+const useScroll = rowImages?.scrollX?.discriminant === true;
+
+// 스크롤을 적용했을 때만 입력한 height 값을 사용하고, 아니면 auto로 둡니다.
+const containerHeight = useScroll ? rowImages?.scrollX?.value : 'auto';
+
+// 4. 이미지 데이터 추출
+const rawImages = rowImages?.images?.value || rowImages?.images || [];
+const images = Array.isArray(rawImages) ? rawImages : [];
+---
+
+<div 
+  class="row-images-container"
+  style={{
+    width: isFullWidth ? '100%' : containerWidth,
+    height: containerHeight,
+    alignItems: justifyContent,
+    overflowX: useScroll ? 'scroll' : 'visible',
+    flexWrap: 'nowrap', // 항상 가로 한 줄로 배치
+    border: useScroll ? '1px solid #7b0513' : 'none',
+    padding: useScroll ? '0.4rem' : '0',
+    background: useScroll ? '#d47979aa' : 'none',
+  }}>
+  {images.map((item: any) => {
+    // ⭐️ 스크롤을 안 쓸 땐 flex: 1이 되므로 개별 너비는 무시(auto), 스크롤 쓸 땐 입력한 size 적용
+    const imgWidth = useScroll ? (item.size || 'auto') : 'auto';
+    const hideBorder = item.border === true;
+      
+    // GlobalImage로 넘겨줄 인라인 스타일 객체
+    const customImgStyle = {
+      width: 'auto',
+      height: isStretch ? justifyContent : 'auto' ,
+      display: 'block',
+      objectFit: 'cover',
+      border: hideBorder ? 'none' : '1px solid #7b0513'
+    };
+
+    return (
+      <div
+        class="image-item"
+        style={{
+          width: imgWidth,
+          flex: useScroll ? 'none' : 1, // 💡 스크롤 미적용 시 1:1:1 비율로 균등 분할
+        }}>
+          {item.link ? (
+            <a href={item.link} target="_blank" rel="noopener noreferrer" class="image-link">
+              <GlobalImage src={item.image} alt="Row Image" imgStyle={customImgStyle} />
+            </a>
+          ) : (
+            <GlobalImage src={item.image} alt="Row Image" imgStyle={customImgStyle} />
+          )}
+      </div>
+    );
+  })}
+</div>
+
+<style>
+  .row-images-container {
+    display: flex;
+    flex-direction: row;
+    gap: 0.4rem;
+    scrollbar-color: auto !important;
+    scrollbar-width: auto !important;
+  }
+
+  /* 가로 스크롤바 커스텀 스타일 */
+  .row-images-container::-webkit-scrollbar {
+    height: 5px;
+    width: 5px;
+    display: block !important;
+  }
+  .row-images-container::-webkit-scrollbar-track {
+    background: transparent; 
+    border-radius: 5px;
+  }
+  .row-images-container::-webkit-scrollbar-thumb {
+    border-radius: 5px;
+    background-color: #7b0513;
+  }
+
+  .image-item {
+    max-height: min-content;
+  }
+
+  .image-link {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+</style>
