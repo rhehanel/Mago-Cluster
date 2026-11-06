@@ -2,18 +2,12 @@ import { collection, fields } from '@keystatic/core';
 
 export const archives = collection({
   label: 'Archives',
-  slugField: 'slug',
+  slugField: 'title',
   path: 'src/content/archives/*',
   format: { contentField: 'content' },
   columns: ['title'],
   schema: {
     title: fields.text({label: 'Title', validation: { isRequired: true }}),
-    slug: fields.slug({ 
-      name: { 
-        label: 'Slug (URL / 파일명)',
-        description: '이 항목의 URL과 파일명으로 사용됩니다.'
-      },
-    }),
     people: fields.blocks(
       {
         list: {

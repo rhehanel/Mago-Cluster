@@ -1,16 +1,16 @@
 import { collection, fields } from '@keystatic/core';
 
 export const works = collection({
-  label: 'Work',
+  label: 'Works',
   slugField: 'title',
   path: 'src/content/works/*',
-  columns: ['title', 'originaltitle'],
   format: { contentField: 'content' },
+  columns: ['title', 'secondtitle'],
   schema: {
     title: fields.slug({
       name: { label: 'English Title', description: "This value will be used to generate the URL slug." },
     }),
-    originaltitle: fields.text({ label: 'Original Title' }),
+    secondtitle: fields.text({ label: 'Second Title' }),
     
     time: fields.conditional(
       fields.select({
@@ -77,7 +77,6 @@ export const works = collection({
         ),
       }
     ),
-    
     people: fields.blocks(
       {
         list: {
@@ -119,13 +118,6 @@ export const works = collection({
         itemLabel: (props: any) => props.value ?? 'Select a category or tags',
       }
     ),
-    
-    coverImage: fields.image({
-      label: 'Cover Image',
-      directory: 'src/assets/images/works',
-      publicPath: '../../assets/images/works/',
-    }),
-    
     content: fields.markdoc({
       label: 'Markdoc Content',
       options: {
@@ -135,7 +127,6 @@ export const works = collection({
         },
       },
     }),
-
     markdocSize: fields.conditional(
       fields.checkbox({ 
         label: 'Customize Markdoc', 
@@ -151,7 +142,6 @@ export const works = collection({
         false: fields.empty(),
       }
     ),
-    
     blocks: fields.blocks(
       {
         markdoc: {

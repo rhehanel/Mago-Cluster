@@ -1,0 +1,55 @@
+---
+import { getEntry } from 'astro:content';
+
+interface Props {
+  people?: any[];
+}
+
+const { people = [] } = Astro.props;
+
+// 전달받은 people 데이터를 파싱하여 화면에 뿌릴 배열로 가공합니다.
+const processedPeople = await Promise.all(
+  people.map(async (item: any) => {
+    if (item.discriminant === 'list') {
+      const slug = item.value;
+      if (!slug) return null;
+      const peopleEntry = await getEntry('people', slug);
+      return {
+        type: 'list',
+        name: peopleEntry?.data?.name || slug,
+        href: `/people/${slug}`,
+      };
+    }
+
+    if (item.discriminant === 'text') {
+      const textData = item.value as { name?: string; link?: string };
+      return {
+        type: 'text',
+        name: textData?.name || '',
+        href: textData?.link || null,
+      };
+    }
+
+    return null;
+  })
+);
+
+const peopleList = processedPeople.filter(Boolean);
+---
+
+{peopleList.length > 0 && (
+  <ul class="people-list">
+    {peopleList.map((person: any) => (
+      <li>
+        <span>〠 </span>
+        {person.href ? (
+          <a href={person.href} class="person-link">
+            {person.name}
+          </a>
+        ) : (
+          <span class="person-name">{person.name}</span>
+        )}
+      </li>
+    ))}
+  </ul>
+)}  

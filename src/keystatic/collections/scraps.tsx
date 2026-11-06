@@ -9,21 +9,15 @@ const imagePublicPath = '../../assets/images/scraps/';
 
 export const scraps = collection({
   label: 'Scraps',
-  slugField: 'slug',
+  slugField: 'title',
   path: 'src/content/scraps/*',
   format: { contentField: 'content' },
   columns: ['title'],
-
   schema: {
     title: fields.text({
       label: 'Title',
       validation: { isRequired: true },
     }),
-
-    slug: fields.slug({
-      name: { label: 'Slug' },
-    }),
-
     time: fields.date({
       label: 'Date',
       defaultValue: new Date(
@@ -32,7 +26,6 @@ export const scraps = collection({
         .toISOString()
         .slice(0, 10),
     }),
-
     people: fields.blocks(
       {
         list: {

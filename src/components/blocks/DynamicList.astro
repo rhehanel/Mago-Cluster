@@ -1,0 +1,107 @@
+---
+import { getCollection } from 'astro:content';
+
+interface Props {
+  data?: {
+    title?: string;
+    source?: 'works' | 'posts' | 'archives'; // archives 추가 (필요시)
+    filterByPerson?: string;
+    filterByArtist?: string;
+    filterByTag?: string;
+    limit?: number;
+  };
+}
+
+const { data = {} } = Astro.props;
+const source = data.source === 'posts' ? 'posts' : 'works';
+
+// source에 맞춰 컬렉션을 불러옵니다.
+const entries = source === 'posts'
+  ? await getCollection('posts')
+  : await getCollection('works');
+
+const personFilter = data.filterByPerson || data.filterByArtist || '';
+const tagFilter = data.filterByTag || '';
+
+function relationshipValue(value: any): string {
+  if (typeof value === 'string') return value;
+  if (value && typeof value.value === 'string') return value.value;
+  return '';
+}
+
+function makeSlug(str: string): string {
+  return str.toLowerCase().trim().replace(/\s+/g, '-');
+}
+
+function matchesReference(value: unknown, reference: string): boolean {
+  const candidate = relationshipValue(value);
+  return Boolean(candidate && makeSlug(candidate) === makeSlug(reference));
+}
+
+function hasPerson(entry: any, reference: string): boolean {
+  if (!reference) return true;
+  const people = Array.isArray(entry.data.people) ? entry.data.people : [];
+  const artists = Array.isArray(entry.data.artists) ? entry.data.artists : [];
+  return [...people, ...artists].some((item: any) =>
+    item?.discriminant === 'list' || item?.discriminant === 'people' || item?.discriminant === 'artist'
+      ? matchesReference(item.value, reference)
+      : false,
+  );
+}
+
+function hasTag(entry: any, reference: string): boolean {
+  if (!reference) return true;
+  const tags = Array.isArray(entry.data.tags) ? entry.data.tags : [];
+  return tags.some((item: any) => matchesReference(item, reference));
+}
+
+const filteredEntries = entries.filter((entry: any) =>
+  hasPerson(entry, personFilter) && hasTag(entry, tagFilter),
+);
+
+const limit = Number.isFinite(data.limit) && Number(data.limit) > 0
+  ? Number(data.limit)
+  : 10;
+const visibleEntries = filteredEntries.slice(0, limit);
+---
+
+<article class="dynamic-list">
+  {data.title && <h3>{data.title}</h3>}
+  {visibleEntries.length > 0 ? (
+    <ul>
+      {visibleEntries.map((entry: any) => (
+        <li>
+          {/* 💡 구형 contentHref를 버리고 최신 Astro 라우팅 방식(entry.id)으로 직결하여 404 해결 */}
+          <a href={`/${source}/${entry.id}`}>
+            {entry.data.originaltitle || entry.data.title || entry.id}
+          </a>
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <p class="empty">No matching items.</p>
+  )}
+</article>
+
+<style>
+  .dynamic-list {
+    padding: 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  .dynamic-list h3 {
+    margin-bottom: 0.25rem;
+    color: #7b0513;
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-decoration: underline;
+  }
+
+  .dynamic-list a {
+    text-decoration: underline;
+  }
+
+  .empty {
+    opacity: 0.65;
+  }
+</style>

@@ -5,13 +5,14 @@
     "title": {
       "type": "string"
     },
-    "originaltitle": {
+    "secondTitle": {
       "type": "string"
     },
+    "publishDate": {},
+    "displayTime": {},
     "coverImage": {
       "type": "string"
     },
-    "time": {},
     "tags": {
       "type": "array",
       "items": {}
@@ -19,14 +20,12 @@
     "people": {},
     "markdocSize": {},
     "blocks": {},
-    "manualList": {},
-    "columnImages": {},
-    "rowImages": {},
     "$schema": {
       "type": "string"
     }
   },
   "required": [
-    "title"
+    "title",
+    "publishDate"
   ]
 }

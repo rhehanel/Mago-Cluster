@@ -1,9 +1,11 @@
 ---
-import ImageWithLink from './ImageWithLink.astro';
-import VideoPlayer from './VideoPlayer.astro';
-import ManualList from './ManualList.astro';
-import ColumnImages from './ColumnImages.astro';
-import RowImages from './RowImages.astro';
+import ImageWithLink from './blocks/ImageWithLink.astro'; // 폴더 경로는 실제 위치에 맞게 수정하세요.
+import VideoPlayer from './blocks/VideoPlayer.astro';
+import ManualList from './blocks/ManualList.astro';
+import ColumnImages from './blocks/ColumnImages.astro';
+import RowImages from './blocks/RowImages.astro';
+import DynamicList from './blocks/DynamicList.astro';
+import TextBlock from './blocks/TextBlock.astro';
 
 interface Props {
   blocks?: any[];
@@ -21,9 +23,9 @@ const {
   markdocMargin = 'unset',
 } = Astro.props;
 
-// Markdoc은 페이지당 하나의 본문이므로 첫 번째 위치 표시자만 사용한다.
+// Markdoc 본문이 들어갈 위치를 찾습니다.
 const firstMarkdocIndex = blocks.findIndex(
-  (item: any) => item?.discriminant === 'markdoc',
+  (item: any) => item?.discriminant === 'markdoc'
 );
 
 const markdocStyle = {
@@ -36,7 +38,7 @@ const markdocInnerStyle = {
 ---
 
 <div class="ordered-content">
-  {/* 기존 데이터에 markdoc 위치 표시자가 없을 때는 본문을 맨 앞에 둔다. */}
+  {/* 1. markdoc 위치 표시자가 블록에 하나도 없으면 가장 위에 본문을 출력합니다. */}
   {firstMarkdocIndex === -1 && (
     <section class="markdoc-content" style={markdocStyle}>
       <div class="overflow-box" style={markdocInnerStyle}>
@@ -45,36 +47,42 @@ const markdocInnerStyle = {
     </section>
   )}
 
+  {/* 2. blocks 배열 순서대로 컴포넌트를 나열합니다. */}
   {blocks.map((item: any, index: number) => {
     const value = item?.value ?? {};
 
-    if (item?.discriminant === 'markdoc') {
-      if (index !== firstMarkdocIndex) return null;
-
-      return (
-        <section class="markdoc-content" style={markdocStyle}>
-          <div class="overflow-box" style={markdocInnerStyle}>
-            <Content />
-          </div>
-        </section>
-      );
-    }
-
     switch (item?.discriminant) {
+      case 'markdoc':
+        // 중복 방지: 첫 번째 마크독 표시자에만 렌더링
+        if (index !== firstMarkdocIndex) return null;
+        return (
+          <section class="markdoc-content" style={markdocStyle}>
+            <div class="overflow-box" style={markdocInnerStyle}>
+              <Content />
+            </div>
+          </section>
+        );
+
       case 'video':
-        return <VideoPlayer link={value} />;
+        return <VideoPlayer {...value} />;
 
       case 'image':
-        return <ImageWithLink image={value} />;
+        return <ImageWithLink {...value} />;
 
       case 'manualList':
-        return <ManualList data={value} />;
+        return <ManualList {...value} />;
 
       case 'columnImages':
-        return <ColumnImages columnImages={value} />;
+        return <ColumnImages {...value} />;
 
       case 'rowImages':
-        return <RowImages rowImages={value} />;
+        return <RowImages {...value} />;
+        
+      case 'dynamicList':
+        return <DynamicList {...value} />;
+        
+      case 'textBlock':
+        return <TextBlock {...value} />;
 
       default:
         return null;
@@ -83,6 +91,7 @@ const markdocInnerStyle = {
 </div>
 
 <style is:global>
+  /* 이전에 정의하신 완벽한 CSS 코드를 그대로 유지합니다. */
   #Content {
     display: flex;
     flex-wrap: wrap;

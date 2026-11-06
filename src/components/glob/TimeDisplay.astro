@@ -1,0 +1,85 @@
+---
+interface Props {
+  timeData: any; 
+}
+
+const { timeData } = Astro.props;
+
+if (!timeData) return null;
+
+const formatType = timeData.discriminant; // 'date', 'year', 'time'
+const data = timeData.value;
+
+// 💡 어떤 형태의 값이 들어와도 안전하게 YYYY.MM.DD로 변환하는 방어적 헬퍼 함수
+function formatDate(dateInput: any): string {
+  if (!dateInput) return '';
+
+  // 만약 Date 객체로 들어왔다면 YYYY-MM-DD 문자열로 변환
+  let dateString = dateInput;
+  if (dateInput instanceof Date) {
+    dateString = dateInput.toISOString();
+  }
+
+  // 문자열이 아닐 경우를 대비한 방어 코드
+  if (typeof dateString !== 'string') {
+    dateString = String(dateString);
+  }
+
+  const cleanDate = dateString.split('T')[0]; 
+  const parts = cleanDate.split('-');
+  
+  if (parts.length !== 3) return dateString; // 형식에 맞지 않으면 원본 반환
+  
+  const [year, month, day] = parts;
+  return `${year}.${month}.${day}`;
+}
+---
+
+<div class="time-display">
+  {formatType === 'date' && (
+    <span class="date-format">
+      <time>{formatDate(data.value)}</time>
+      { data.time? <span class="period-time">{data.time}</span> : ''}
+    </span>
+  )}
+
+  {formatType === 'year' && (
+    <span class="year-format">
+      <time>{data.value}</time>
+    </span>
+  )}
+
+  {formatType === 'time' && (
+    <span class="period-format">
+      {/* Custom String 방식일 때 */}
+      {data.discriminant === true && (
+        <>
+          <time class="period-dates">{data.value.dates}</time>
+          {data.value.time && <span class="period-time"> ({data.value.time})</span>}
+        </>
+      )}
+
+      {/* 정밀 Date 방식일 때 (시작일 ~ 종료일) */}
+      {data.discriminant === false && (
+        <>
+          <time class="period-dates">
+            {formatDate(data.value.date)} 
+            {data.value.enddate ? ` — ${formatDate(data.value.enddate)}` : ''}
+          </time>
+          {data.value.time && <span class="period-time">{data.value.time}</span>}
+        </>
+      )}
+    </span>
+  )}
+</div>
+
+<style>
+  .time-display {
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    font-family: monospace;
+  }
+  .specific-time, .period-time {
+    opacity: 0.8;
+  }
+</style>

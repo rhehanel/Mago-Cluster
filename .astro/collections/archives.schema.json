@@ -5,6 +5,9 @@
     "title": {
       "type": "string"
     },
+    "slug": {
+      "type": "string"
+    },
     "originaltitle": {
       "type": "string"
     },
@@ -17,16 +20,14 @@
       "items": {}
     },
     "people": {},
+    "works": {
+      "type": "array",
+      "items": {}
+    },
     "blocks": {},
     "markdocSize": {},
-    "manualList": {},
-    "columnImages": {},
-    "rowImages": {},
     "$schema": {
       "type": "string"
     }
-  },
-  "required": [
-    "title"
-  ]
+  }
 }

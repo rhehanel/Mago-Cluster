@@ -1,0 +1,35 @@
+Modified files:
+keystatic.config.ts
+package-lock.json
+package.json
+src/components/ImageWithLink.astro
+src/components/ManualList.astro
+src/components/OrderedContent.astro
+src/components/RowImages.astro
+src/components/VideoPlayer.astro
+src/components/markdoc/CustomImage.astro
+src/components/markdoc/ImageGallery.astro
+src/content.config.ts
+src/keystatic/collections/archives.ts
+src/keystatic/collections/people.ts
+src/keystatic/collections/works.ts
+src/pages/archives/[slug].astro
+src/pages/index.astro
+src/pages/people/[slug].astro
+src/pages/posts/[slug].astro
+src/pages/scraps/[slug].astro
+src/pages/sitemap.astro
+src/pages/tags/[slug].astro
+src/pages/works/[slug].astro
+
+Added files:
+IMPLEMENTATION_NOTES.md
+src/components/DynamicList.astro
+src/components/TextBlock.astro
+src/keystatic/collections/scraps.ts
+src/keystatic/contentFields.ts
+src/lib/slug.ts
+
+Removed files (delete from existing project):
+src/keystatic/collections/scraps.tsx
+src/keystatic/contentFields.tsx

@@ -8,6 +8,8 @@
     "coverImage": {
       "type": "string"
     },
+    "markdocSize": {},
+    "blocks": {},
     "$schema": {
       "type": "string"
     }

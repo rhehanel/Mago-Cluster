@@ -1,84 +1,78 @@
-// @ts-ignore
+// @ts-ignore - Astro provides this virtual module at build time.
 import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
 
 const people = defineCollection({
-  loader: glob({ 
-    pattern: '**/*.{md,mdoc,yaml,json}', 
-    base: './src/content/people' 
+  loader: glob({
+    pattern: '**/*.{md,mdoc,yaml,json}',
+    base: './src/content/people',
   }),
   schema: z.object({
     name: z.string(),
     coverImage: z.string().optional(),
-  })
+    markdocSize: z.any().optional(),
+    blocks: z.any().optional(),
+  }),
 });
 
 const posts = defineCollection({
-  loader: glob({ 
-    pattern: ['**/*.{md,mdoc,yaml,json}', '!**/blocks/**'], 
-    base: './src/content/posts' 
+  loader: glob({
+    pattern: '**/*.{md,mdoc}',
+    base: './src/content/posts',
   }),
   schema: ({ image }) => z.object({
     title: z.string(),
-    originaltitle: z.string().optional(),
+    secondTitle: z.string().optional(), 
+    publishDate: z.any(),
+    displayTime: z.any().optional(),
     coverImage: image().optional(),
-    time: z.any().optional(),
     tags: z.array(z.any()).optional(),
     people: z.any().optional(),
     markdocSize: z.any().optional(),
     blocks: z.any().optional(),
-    manualList: z.any().optional(),
-    columnImages: z.any().optional(),
-    rowImages: z.any().optional(),
-  })
+  }),
 });
 
 const works = defineCollection({
-  loader: glob({ 
-    pattern: ['**/*.{md,mdoc,yaml,json}', '!**/blocks/**'], 
-    base: './src/content/works' 
+  loader: glob({
+    pattern: ['**/*.{md,mdoc,yaml,json}', '!**/blocks/**'],
+    base: './src/content/works',
   }),
   schema: ({ image }) => z.object({
     title: z.string(),
     originaltitle: z.string().optional(),
     coverImage: image().optional(),
-    
     time: z.any().optional(),
     tags: z.array(z.any()).optional(),
     people: z.any().optional(),
     blocks: z.any().optional(),
     markdocSize: z.any().optional(),
-    manualList: z.any().optional(),
-    columnImages: z.any().optional(),
-    rowImages: z.any().optional(),
-  })
+  }),
 });
 
 const archives = defineCollection({
-  loader: glob({ 
-    pattern: ['**/*.{md,mdoc,yaml,json}', '!**/blocks/**'], 
-    base: './src/content/archives' 
+  loader: glob({
+    pattern: '**/*.{md,mdoc}', 
+    base: './src/content/archives',
   }),
   schema: ({ image }) => z.object({
-    title: z.string(),
+    title: z.string().optional(), 
+    slug: z.string().optional(),
     originaltitle: z.string().optional(),
     coverImage: image().optional(),
-    
     time: z.any().optional(),
     tags: z.array(z.any()).optional(),
     people: z.any().optional(),
+    works: z.array(z.any()).optional(),
     blocks: z.any().optional(),
     markdocSize: z.any().optional(),
-    manualList: z.any().optional(),
-    columnImages: z.any().optional(),
-    rowImages: z.any().optional(),
-  })
+  }),
 });
 
 const scraps = defineCollection({
-  loader: glob({ 
-    pattern: ['**/*.{md,mdoc,yaml,json}', '!**/blocks/**'], 
-    base: './src/content/scraps' 
+  loader: glob({
+    pattern: ['**/*.{md,mdoc,yaml,json}', '!**/blocks/**'],
+    base: './src/content/scraps',
   }),
   schema: ({ image }) => z.object({
     title: z.string(),
@@ -89,18 +83,20 @@ const scraps = defineCollection({
     time: z.any().optional(),
     blocks: z.any().optional(),
     markdocSize: z.any().optional(),
-    manualList: z.any().optional(),
-    columnImages: z.any().optional(),
-    rowImages: z.any().optional(),
-  })
+  }),
 });
 
+// Tags intentionally remain a simple taxonomy collection without the ordered
+// content canvas or the Markdoc custom-component editor.
 const tags = defineCollection({
-  loader: glob({ pattern: '**/*.{md,mdoc,yaml,json}', base: './src/content/tags' }),
+  loader: glob({
+    pattern: '**/*.{md,mdoc,yaml,json}',
+    base: './src/content/tags',
+  }),
   schema: z.object({
     name: z.string(),
     description: z.string().optional(),
-  })
+  }),
 });
 
 export const collections = {

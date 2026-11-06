@@ -2,7 +2,7 @@ import { collection, fields } from '@keystatic/core';
 
 export const people = collection({
   label: 'People',
-  slugField: 'name', // slug 대신 name을 기준점으로 변경
+  slugField: 'name',
   path: 'src/content/people/*',
   format: { contentField: 'content' },
   columns: ['name'],

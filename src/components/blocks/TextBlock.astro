@@ -1,0 +1,46 @@
+---
+import Markdoc from '@markdoc/markdoc';
+
+interface Props {
+  text?: string | { value?: string } | null;
+}
+
+const { text } = Astro.props;
+const content = typeof text === 'string' ? text : text?.value ?? '';
+
+let html = '';
+if (content.trim()) {
+  try {
+    const ast = Markdoc.parse(content);
+    html = Markdoc.renderers.html(Markdoc.transform(ast));
+  } catch (error) {
+    // Keep legacy MDX/source text visible if it contains syntax Markdoc cannot parse.
+    console.warn('Text block Markdown rendering failed; falling back to plain text.', error);
+  }
+}
+---
+
+{content && (
+  html
+    ? <article class="text-block rendered" set:html={html} />
+    : <pre class="text-block plain">{content}</pre>
+)}
+
+<style>
+  .text-block {
+    box-sizing: border-box;
+    max-width: 100%;
+    padding: 0.6rem;
+    overflow-wrap: anywhere;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+
+  .text-block.plain {
+    white-space: pre-wrap;
+    font: inherit;
+  }
+
+  .text-block.rendered :global(p:first-child) { margin-top: 0; }
+  .text-block.rendered :global(p:last-child) { margin-bottom: 0; }
+</style>

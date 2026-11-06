@@ -1,21 +1,27 @@
 ---
-import { getCollection, getEntry, render } from 'astro:content';
+import { getCollection, render } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 
 export const prerender = true;
 
-const { slug } = Astro.params;
-if (!slug) throw new Error('Slug not found');
-const archive = await getEntry('archives', slug);
-
-if (!archive) throw new Error('No post found for this slug');
-const { Content } = await render(archive);
-
-// Generate static pages
 export async function getStaticPaths() {
-  const archives = await getCollection('artists');
-  return archives.map(archive => ({ params: { slug: archive.id } }));
+  const archives = await getCollection('archives');
+  
+  // 💡 [디버깅] Astro가 만든 정확한 주소(slug) 목록을 터미널에 출력합니다.
+  console.log("\n=== 🟢 Astro가 생성한 Archives 주소 목록 ===");
+  archives.forEach((archive, index) => {
+    console.log(`${index + 1}. 접속 가능 주소: /archives/${archive.id}`);
+  });
+  console.log("===========================================\n");
+  
+  return archives.map((archive) => ({
+    params: { slug: archive.id }, 
+    props: { archive },
+  }));
 }
+
+const { archive } = Astro.props;
+const { Content } = await render(archive);
 ---
 
 <Layout title={archive.data.title}>

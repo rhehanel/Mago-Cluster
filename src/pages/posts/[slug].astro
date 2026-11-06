@@ -1,7 +1,11 @@
 ---
-import { getCollection, render, getEntry } from 'astro:content';
+import { getCollection, render } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import OrderedContent from '../../components/OrderedContent.astro';
+
+import Title from '../../components/glob/Title.astro';
+import TimeDisplay from '../../components/glob/TimeDisplay.astro';
+import PeopleList from '../../components/glob/People.astro';
 
 export const prerender = true;
 
@@ -11,7 +15,10 @@ export async function getStaticPaths() {
   return allPosts.map((post) => {
     const cleanSlug = post.id
       .replace(/\/index$/, '')
-      .replace(/\.(mdoc|md|mdx)$/, '');
+      .replace(/\.(mdoc|md|mdx)$/, '')
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-');
 
     return {
       params: { slug: cleanSlug },
@@ -23,139 +30,35 @@ export async function getStaticPaths() {
 const { post } = Astro.props;
 const { Content } = await render(post);
 
-const originalTitle = post.data.originaltitle;
-const title = post.data.title;
-
-function formatDate(dateInput: string | Date | undefined) {
-  if (!dateInput) return '';
-
-  // YYYY-MM-DD를 UTC 변환 없이 분해해 날짜가 하루 밀리는 문제를 피한다.
-  const match = String(dateInput).match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
-  if (match) {
-    const [, year, month, day] = match;
-    return `${year}. ${Number(month)}. ${String(day).padStart(2, '0')}`;
-  }
-
-  const date = new Date(dateInput);
-  if (Number.isNaN(date.getTime())) return '';
-
-  return `${date.getFullYear()}. ${date.getMonth() + 1}. ${String(
-    date.getDate(),
-  ).padStart(2, '0')}`;
-}
-
-const timeField = post.data.time;
-const primaryType = timeField?.discriminant;
-const primaryData = timeField?.value ?? {};
-
-let displayDate = '';
-let displayTime = '';
-
-if (primaryType === 'year') {
-  displayDate = primaryData.value || '';
-} else if (primaryType === 'date') {
-  displayDate = formatDate(primaryData.value);
-  displayTime = primaryData.time || '';
-} else if (primaryType === 'time') {
-  const isCustomDate = primaryData.discriminant === true;
-  const secondaryData = primaryData.value ?? {};
-
-  displayTime = secondaryData.time || '';
-
-  if (isCustomDate) {
-    displayDate = secondaryData.dates || '';
-  } else {
-    const startDate = formatDate(secondaryData.date);
-    const endDate = formatDate(secondaryData.enddate);
-    displayDate =
-      endDate && startDate !== endDate
-        ? `${startDate} ~ ${endDate}`
-        : startDate;
-  }
-}
-
-const people = post.data.people ?? [];
-const blocks = post.data.blocks ?? [];
-
-const processedPeople = await Promise.all(
-  people.map(async (item: any) => {
-    if (item.discriminant === 'list') {
-      const slug = item.value;
-      if (!slug) return null;
-
-      const peopleEntry = await getEntry('people', slug);
-
-      return {
-        type: 'list',
-        name: peopleEntry?.data?.name || slug,
-        href: `/people/${slug}`,
-      };
-    }
-
-    if (item.discriminant === 'text') {
-      const textData = item.value as { name?: string; link?: string };
-
-      return {
-        type: 'text',
-        name: textData?.name || '',
-        href: textData?.link || null,
-      };
-    }
-
-    return null;
-  }),
-);
-
-const peopleList = processedPeople.filter(Boolean);
-
 const markdocSizeField = post.data.markdocSize;
-const customMarkdocSize = markdocSizeField?.discriminant === true;
-const markdocSize = customMarkdocSize ? markdocSizeField.value ?? {} : {};
+const isCustom = markdocSizeField?.discriminant === true;
+const markdocSize = isCustom ? markdocSizeField.value ?? {} : {};
 
 const markdocWidth = markdocSize.width || '50%';
 const markdocHeight = markdocSize.height || 'max-content';
 const markdocMargin = markdocSize.margin === true ? '0 auto' : 'unset';
 ---
 
-<Layout title={title}>
+<Layout title={post.data.title}>
   <div>
     <section class="title">
-      {originalTitle ? (
-        <h1>{originalTitle}<br />{title}</h1>
-      ) : (
-        <h1>{title}</h1>
-      )}
+      {/* 1. 타이틀 모듈 */}
+      <Title title={post.data.title} secondTitle={post.data.secondTitle} />
 
-      {(displayDate || displayTime) && (
-        <div class={displayTime ? 'time-data flex' : 'time-data'}>
+      {post.data.displayTime && (
+        <div class="time-data flex">
           <span>☀︎</span>
-          <span>
-            {displayDate && <small>{displayDate}</small>}
-            {displayTime && <small>{displayTime}</small>}
-          </span>
+          <TimeDisplay timeData={post.data.displayTime} />
         </div>
       )}
 
-      {peopleList.length > 0 && (
-        <ul class="people-list">
-          {peopleList.map((person: any) => (
-            <li>
-              <span>〠 </span>
-              {person.href ? (
-                <a href={person.href} class="person-link">
-                  {person.name}
-                </a>
-              ) : (
-                <span class="person-name">{person.name}</span>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
+      {/* 3. 인물(People) 목록 모듈 */}
+      <PeopleList people={post.data.people} />
     </section>
 
+    {/* 본문 및 블록 렌더링 */}
     <OrderedContent
-      blocks={blocks}
+      blocks={post.data.blocks ?? []}
       Content={Content}
       markdocWidth={markdocWidth}
       markdocHeight={markdocHeight}
@@ -189,11 +92,5 @@ const markdocMargin = markdocSize.margin === true ? '0 auto' : 'unset';
     gap: 0.2rem;
     font-size: 0.7rem;
     color: #d47979;
-  }
-
-  .title .time-data small,
-  .title .time-data span {
-    display: block;
-    font-size: 0.7rem;
   }
 </style>
