@@ -1,5 +1,7 @@
 ---
-import ImageWithLink from './blocks/ImageWithLink.astro'; // 폴더 경로는 실제 위치에 맞게 수정하세요.
+//OrderedContet.astro
+
+import ImageWithLink from './blocks/ImageWithLink.astro';
 import VideoPlayer from './blocks/VideoPlayer.astro';
 import ManualList from './blocks/ManualList.astro';
 import ColumnImages from './blocks/ColumnImages.astro';
@@ -10,96 +12,132 @@ import TextBlock from './blocks/TextBlock.astro';
 interface Props {
   blocks?: any[];
   Content: any;
-  markdocWidth?: string;
+  hasBodyContent?: boolean;
+  markdocSpan?: string;
   markdocHeight?: string;
   markdocMargin?: string;
+  contentDivision?: boolean;
+  collection?: string;
 }
 
 const {
   blocks = [],
   Content,
-  markdocWidth = '100%',
+  hasBodyContent = false,
+  markdocSpan = '12',
   markdocHeight = 'max-content',
-  markdocMargin = 'unset',
+  markdocMargin = '',
+  contentDivision,
+  collection,
 } = Astro.props;
 
-// Markdoc 본문이 들어갈 위치를 찾습니다.
+// 블록 배열에서 사용자가 명시적으로 넣은 markdoc 블록의 위치를 찾습니다.
 const firstMarkdocIndex = blocks.findIndex(
   (item: any) => item?.discriminant === 'markdoc'
 );
 
-const markdocStyle = {
-  width: markdocWidth,
+// 💡 12분할 그리드 밖(규칙 A) 상단 배치 시 markdocSpan을 % 너비로 환산
+const spanNum = Number(markdocSpan) || 12;
+const computedWidth = `${(spanNum / 12) * 100}%`;
+
+const columnNum = (spanNum > 5 && collection !== 'scraps') ? 2 : 0;
+
+const markdocDefaultStyle = {
+  width: computedWidth,
   margin: markdocMargin,
 };
+
 const markdocInnerStyle = {
   height: markdocHeight,
+  columnCount : contentDivision? 'none' : columnNum,
 };
+
 ---
 
-<div class="ordered-content">
-  {/* 1. markdoc 위치 표시자가 블록에 하나도 없으면 가장 위에 본문을 출력합니다. */}
-  {firstMarkdocIndex === -1 && (
-    <section class="markdoc-content" style={markdocStyle}>
-      <div class="overflow-box" style={markdocInnerStyle}>
-        <Content />
-      </div>
-    </section>
-  )}
+{/* 💡 [규칙 A] 마크독 본문이 존재하지만 블록 리스트에 넣지 않은 경우 -> ordered-content "바깥" 최상단에 출력 */}
+{hasBodyContent && firstMarkdocIndex === -1 && (
+  <section class="markdoc-content markdoc-default-top" style={markdocDefaultStyle}>
+    <div class="overflow-box" style={markdocInnerStyle}>
+      <Content />
+    </div>
+  </section>
+)}
 
-  {/* 2. blocks 배열 순서대로 컴포넌트를 나열합니다. */}
+{/* 💡 12분할 그리드가 적용된 ordered-content 컨테이너 */}
+<div class="ordered-content">
   {blocks.map((item: any, index: number) => {
     const value = item?.value ?? {};
+    const span = value?.gridSpan || '12';
 
-    switch (item?.discriminant) {
-      case 'markdoc':
-        // 중복 방지: 첫 번째 마크독 표시자에만 렌더링
-        if (index !== firstMarkdocIndex) return null;
-        return (
-          <section class="markdoc-content" style={markdocStyle}>
-            <div class="overflow-box" style={markdocInnerStyle}>
-              <Content />
-            </div>
-          </section>
-        );
-
-      case 'video':
-        return <VideoPlayer {...value} />;
-
-      case 'image':
-        return <ImageWithLink {...value} />;
-
-      case 'manualList':
-        return <ManualList {...value} />;
-
-      case 'columnImages':
-        return <ColumnImages {...value} />;
-
-      case 'rowImages':
-        return <RowImages {...value} />;
-        
-      case 'dynamicList':
-        return <DynamicList {...value} />;
-        
-      case 'textBlock':
-        return <TextBlock {...value} />;
-
-      default:
-        return null;
+    // 💡 [규칙 B] 블록 리스트 안의 markdoc 처리 (전달받은 markdocSpan 적용)
+    if (item?.discriminant === 'markdoc') {
+      if (index !== firstMarkdocIndex || !hasBodyContent) return null;
+      return (
+        <section 
+          class={`markdoc-content markdoc-block-item col-span-${markdocSpan}`} 
+          style={{ margin: markdocMargin }}
+        >
+          <div class="overflow-box" style={markdocInnerStyle}>
+            <Content />
+          </div>
+        </section>
+      );
     }
+
+    // 일반 동적 블록 렌더링 (그리드 래퍼 적용)
+    return (
+      <div class={`grid-block col-span-${span}`}>
+        {item?.discriminant === 'video' && <VideoPlayer {...value} />}
+        {item?.discriminant === 'image' && <ImageWithLink {...value} />}
+        {item?.discriminant === 'manualList' && <ManualList {...value} />}
+        {item?.discriminant === 'columnImages' && <ColumnImages {...value} />}
+        {item?.discriminant === 'rowImages' && <RowImages {...value} />}
+        {item?.discriminant === 'dynamicList' && <DynamicList {...value} />}
+        {item?.discriminant === 'textBlock' && <TextBlock {...value} />}
+      </div>
+    );
   })}
 </div>
 
 <style is:global>
-  /* 이전에 정의하신 완벽한 CSS 코드를 그대로 유지합니다. */
-  #Content {
-    display: flex;
-    flex-wrap: wrap;
-    padding: 0.4rem;
+  /* 12분할 CSS Grid 설정 */
+  .ordered-content {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
     gap: 0.4rem;
-    justify-content: flex-start;
-    align-items: flex-start;
-    align-content: flex-start;
+    align-items: start;
+    width: 100%;
+  }
+
+  /* CSS Grid 내 자식 요소 축소/넘침 방지 */
+  .grid-block {
+    min-width: 0;
+    width: 100%;
+  }
+
+  /* 그리드 스팬 클래스 정의 */
+  .col-span-12 { grid-column: span 12; }
+  .col-span-11  { grid-column: span 11; }
+  .col-span-10  { grid-column: span 10; }
+  .col-span-9  { grid-column: span 9; }
+  .col-span-8  { grid-column: span 8; }
+  .col-span-7  { grid-column: span 7; } /* 1/2 */
+  .col-span-6  { grid-column: span 6; } /* 1/2 */
+  .col-span-5  { grid-column: span 5; } /* 1/2 */
+  .col-span-4  { grid-column: span 4; } /* 1/3 */
+  .col-span-3  { grid-column: span 3; } /* 1/4 */
+  .col-span-2  { grid-column: span 2; } /* 1/6 (작은 아이콘/배너용) */
+  .col-span-1  { grid-column: span 1; }
+
+  /* 모바일 화면 대응 (768px 이하에서는 한 줄 전체 차지) */
+  @media (max-width: 768px) {
+    .grid-block,
+    .markdoc-block-item {
+      grid-column: span 12 !important;
+    }
+    .markdoc-default-top {
+      width: 100% !important;
+    }
   }
 
   #Content > article {
@@ -108,11 +146,6 @@ const markdocInnerStyle = {
   }
 
   .markdoc-content {
-    box-sizing: border-box;
-    max-width: 100%;
-    padding: 0.6rem;
-    font-size: 0.8rem;
-    line-height: 1.15rem;
     background-color: rgb(212 121 121 / 1);
     background:
       linear-gradient(rgb(212 121 121 / 1), rgb(212 121 121 / 1)) center / calc(100% - 20px) calc(100% - 20px) no-repeat,
@@ -124,6 +157,19 @@ const markdocInnerStyle = {
       linear-gradient(to right, rgb(212 121 121 / 0), rgb(212 121 121 / 1)) left center / 10px calc(100% - 20px) no-repeat,
       linear-gradient(to bottom, rgb(212 121 121 / 0), rgb(212 121 121 / 1)) top center / calc(100% - 20px) 10px no-repeat,
       linear-gradient(to top, rgb(212 121 121 / 0), rgb(212 121 121 / 1)) bottom center / calc(100% - 20px) 10px no-repeat;
+  }
+
+  .markdoc-default-top {
+    margin-bottom: 0.4rem;
+    box-sizing: border-box;
+  }
+
+  .markdoc-block-item {
+    box-sizing: border-box;
+    max-width: 100%;
+    padding: 0.6rem;
+    font-size: 0.8rem;
+    line-height: 1.15rem;
   }
 
   .markdoc-content .overflow-box {
@@ -147,5 +193,21 @@ const markdocInnerStyle = {
   .markdoc-content .overflow-box::-webkit-scrollbar-thumb {
     border-radius: 5px;
     background-color: #7b0513;
+  }
+  
+  @media (max-width: 768px) {
+    .markdoc-content {
+      background-color: rgb(212 121 121 / 1);
+      background:
+        linear-gradient(rgb(212 121 121 / 1), rgb(212 121 121 / 1)) center / calc(100% - 16px) calc(100% - 16px) no-repeat,
+        radial-gradient(circle at bottom left, rgb(212 121 121 / 1), rgb(212 121 121 / 0) 60%) top right / 8px 8px no-repeat,
+        radial-gradient(circle at bottom right, rgb(212 121 121 / 1), rgb(212 121 121 / 0) 60%) top left / 8px 8px no-repeat,
+        radial-gradient(circle at top right, rgb(212 121 121 / 1), rgb(212 121 121 / 0) 60%) bottom left / 8px 8px no-repeat,
+        radial-gradient(circle at top left, rgb(212 121 121 / 1), rgb(212 121 121 / 0) 60%) bottom right / 8px 8px no-repeat,
+        linear-gradient(to left, rgb(212 121 121 / 0), rgb(212 121 121 / 1)) right center / 8px calc(100% - 16px) no-repeat,
+        linear-gradient(to right, rgb(212 121 121 / 0), rgb(212 121 121 / 1)) left center / 8px calc(100% - 16px) no-repeat,
+        linear-gradient(to bottom, rgb(212 121 121 / 0), rgb(212 121 121 / 1)) top center / calc(100% - 16px) 8px no-repeat,
+        linear-gradient(to top, rgb(212 121 121 / 0), rgb(212 121 121 / 1)) bottom center / calc(100% - 16px) 8px no-repeat;
+    }
   }
 </style>

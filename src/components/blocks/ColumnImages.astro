@@ -1,71 +1,73 @@
 ---
 import GlobalImage from '../GlobalImage.astro';
 
-export interface ColumnImageItem {
-  image: string;
-  link?: string;
-  size?: number | null;
-  border?: boolean;
-}
-
 interface Props {
   columnImages?: any;
 }
 
-const { columnImages } = Astro.props;
+const props = Astro.props;
+const data = props.columnImages?.columnImages ? props.columnImages.columnImages : (props.columnImages ?? props);
 
-// 1. 너비 설정
-const containerWidth = columnImages?.width?.value;
+function extractString(input: any): string {
+  if (!input) return '';
+  if (typeof input === 'string') return input;
+  if (typeof input === 'function' || typeof input !== 'object') return '';
+  if (typeof input.link === 'string') return input.link;
+  if (typeof input.url === 'string') return input.url;
+  if (typeof input.value === 'string') return input.value;
 
-// 2. 정렬 및 풀위스 여부 설정
-const isFullWidth = columnImages?.alignment?.discriminant === true;
-const alignment = isFullWidth ? 'full' : (columnImages?.alignment?.value || 'left');
+  for (const key of Object.keys(input)) {
+    const found = extractString(input[key]);
+    if (found && typeof found === 'string' && !found.includes('native code')) return found;
+  }
+  return '';
+}
 
-// 3. 높이 및 스크롤 설정
-const useScroll = columnImages?.height?.discriminant === true;
-const containerHeight = useScroll 
-  ? (columnImages?.height?.value as { height?: string })?.height || 'auto' 
-  : 'max-content';
+const containerWidth = data?.containerWidth || '100%';
 
-// 4. 이미지 데이터 추출 (Keystatic 스키마 기준)
-const images = Array.isArray(columnImages?.images) ? columnImages.images : [];
+// 💡 스크롤 설정 및 조건부 높이 추출
+const useScroll = data?.scrollable?.discriminant === true;
+const containerHeight = useScroll ? (data?.scrollable?.value?.containerHeight || 'auto') : 'auto';
+
+const rawImages = data?.images?.value || data?.images || [];
+const images = Array.isArray(rawImages) ? rawImages : [];
 ---
 
 <div 
-    class={`column-images-container ${alignment}`}
-    style={{
-        width: containerWidth ? containerWidth : '30%',
-        height: containerHeight,
-        overflowY: useScroll ? 'scroll' : 'visible',
-        border: useScroll ? '1px solid #7b0513' : 'none',
-        padding: useScroll ? '0.4rem' : '0', // none 대신 0 사용 권장
-        background: useScroll ? '#d47979aa' : 'transparent',
-    }}>
-    {images.map((item: any) => {
-        const imgWidth = item.size;
-        const hideBorder = item.border === true;
-        
-        // 💡 Keystatic 값을 기반으로 GlobalImage에 넘겨줄 스타일 생성
-        const customImgStyle = {
-          width: '100%',
-          height: 'auto',
-          display: 'block',
-          objectFit: 'cover',
-          border: hideBorder ? 'none' : '1px solid #7b0513'
-        };
+  class={`column-images-container ${useScroll ? 'is-scrollable' : ''}`}
+  style={{
+    width: containerWidth,
+    height: containerHeight,
+    overflowY: useScroll ? 'scroll' : 'visible',
+  }}>
+  {images.map((item: any) => {
+    const altText = item.alt || '';
+    const showCaption = item.caption === true;
+    const rawLink = extractString(item.link);
+    const linkUrl = (rawLink.startsWith('http://') || rawLink.startsWith('https://') || rawLink.startsWith('/')) ? rawLink : '';
 
-        return (
-        <div class="image-item" style={{ width: isFullWidth ? '100%' : imgWidth }}>
-            {item.link ? (
-            <a href={item.link} target="_blank" rel="noopener noreferrer" class="image-link">
-                <GlobalImage src={item.image} alt="Column Image" imgStyle={customImgStyle} />
-            </a>
-            ) : (
-            <GlobalImage src={item.image} alt="Column Image" imgStyle={customImgStyle} />
-            )}
-        </div>
-        );
-    })}
+    const customImgStyle = {
+      width: '100%',
+      height: 'auto',
+      display: 'block',
+      objectFit: 'cover',
+    };
+
+    return (
+      <div class="image-item" style={{ width: '100%' }}>
+        {linkUrl ? (
+          <a href={linkUrl} target="_blank" rel="noopener noreferrer" class="image-link">
+            <GlobalImage src={item.image} alt={altText} imgStyle={customImgStyle} />
+          </a>
+        ) : (
+          <GlobalImage src={item.image} alt={altText} imgStyle={customImgStyle} />
+        )}
+        {showCaption && altText && (
+          <p class="image-caption">{altText}</p>
+        )}
+      </div>
+    );
+  })}
 </div>
 
 <style>
@@ -73,36 +75,43 @@ const images = Array.isArray(columnImages?.images) ? columnImages.images : [];
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
+    max-width: 100%;
   }
 
-  /* 정렬별 레이아웃 분기 */
-  .column-images-container.left {
-    align-items: flex-start;
-  }
-  .column-images-container.center {
-    align-items: center;
-  }
-  .column-images-container.right {
-    align-items: flex-end;
-  }
-  .column-images-container.full {
-    align-items: stretch;
+  .column-images-container.is-scrollable {
+    border: 1px solid #7b0513;
+    padding: 0.4rem;
+    background: #d47979aa;
+    scrollbar-color: auto;
+    scrollbar-width: auto;
   }
 
-  .images-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-    width: 100%;
+  .column-images-container.is-scrollable::-webkit-scrollbar {
+    width: 5px;
+  }
+  .column-images-container.is-scrollable::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .column-images-container.is-scrollable::-webkit-scrollbar-thumb {
+    border-radius: 5px;
+    background-color: #7b0513;
   }
 
   .image-item {
     display: flex;
     flex-direction: column;
+    gap: 0.3rem;
   }
 
   .image-link {
     display: block;
     width: 100%;
+  }
+
+  .image-caption {
+    font-size: 0.75rem;
+    color: #7b0513;
+    margin: 0;
+    text-align: left;
   }
 </style>

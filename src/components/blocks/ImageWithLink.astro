@@ -1,52 +1,76 @@
 ---
 import GlobalImage from '../GlobalImage.astro';
 
-interface Props {
-  image: {
-    image: string;
-    link?: string;
-    size?: number | null;
-    border?: boolean;
-  };
+const props = Astro.props as any;
+
+let realImage = '';
+let realLink = '';
+let realAlt = 'Work Image';
+
+// 💡 1. 데이터 내부를 모두 탐색하여 '이미지 경로'와 '웹 링크'를 성질에 따라 완벽히 분리합니다.
+function findData(obj: any) {
+  if (!obj || typeof obj !== 'object') return;
+  
+  for (const [key, value] of Object.entries(obj)) {
+    if (typeof value === 'string' && value.trim() !== '') {
+      const val = value.trim();
+      
+      // a. 확장자(.jpeg, .jpg 등)나 에셋 폴더(assets/)가 포함되어 있으면 무조건 '이미지'로 판별
+      if (val.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i) || val.includes('assets/') || val.includes('_image')) {
+        if (!realImage) realImage = val;
+      } 
+      // b. 이미지가 아니면서, 키 이름이 link/url 이거나 http/www/.org 등을 포함하면 '링크'로 판별
+      else if (key === 'link' || key === 'url' || val.match(/^https?:\/\//) || val.match(/^www\./) || val.includes('.org') || val.includes('.com')) {
+        if (!realLink) realLink = val;
+      }
+      // c. 대체 텍스트
+      else if (key === 'alt') {
+        if (realAlt === 'Work Image') realAlt = val;
+      }
+    } 
+    // 객체가 또 중첩되어 있다면 안으로 들어가서 다시 찾기
+    else if (typeof value === 'object') {
+      findData(value);
+    }
+  }
 }
 
-const { image: blockValue } = Astro.props;
-const imagePath = blockValue?.image;
-const linkUrl = blockValue?.link;
+findData(props);
 
-// size 값이 없으면 기본 100%
-const imageWidth = blockValue?.size ? `${blockValue.size}` : '30%';
+// (예외 처리) 만약 props 자체가 단순 문자열로 넘어온 1차원 데이터일 경우 방어
+if (typeof props.image === 'string' && !realImage && (props.image.includes('assets/') || props.image.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i))) {
+  realImage = props.image;
+}
 
-const isBorder = blockValue?.border ? 'none !important' : '1px solid #7b0513';
+// 💡 2. 외부 링크 다듬기 (사용자가 http 없이 www... 등으로 입력했을 때만 https:// 부착)
+let finalLinkUrl = '';
+if (realLink) {
+  if (realLink.match(/^(https?:\/\/|\/|mailto:)/)) {
+    finalLinkUrl = realLink; // 정상 URL은 그대로 통과
+  } else {
+    finalLinkUrl = `https://${realLink}`; // 프로토콜이 누락된 경우 강제 부착
+  }
+}
 
-// 💡 GlobalImage 내부 img 태그로 주입될 스타일 객체
+// 💡 3. 스타일 및 폭 설정
+const rawSize = props.size ?? props.image?.size ?? props.gridSpan ?? 30;
+const imageWidth = typeof rawSize === 'number' ? `${rawSize}%` : rawSize;
+const isBorder = (props.border ?? props.image?.border) ? 'none !important' : '1px solid #7b0513';
+
 const customImgStyle = {
   width: '100%',
   height: 'auto',
-  display: 'block'
+  display: 'block',
+  border: isBorder,
 };
 ---
 
-<article class="image-with-link" style={{ width: imageWidth, border: isBorder }}>
-  {linkUrl ? (
-    <a href={linkUrl} target="_blank" rel="noopener noreferrer">
-      <GlobalImage src={imagePath} alt="Work Image" imgStyle={customImgStyle} />
+<article class="image-with-link" style={{ width: imageWidth }}>
+  {finalLinkUrl ? (
+    <a href={finalLinkUrl} target="_blank" rel="noopener noreferrer">
+      <GlobalImage src={realImage} alt={realAlt} imgStyle={customImgStyle}/>
     </a>
   ) : (
-    <GlobalImage src={imagePath} alt="Work Image" imgStyle={customImgStyle} />
+    <GlobalImage src={realImage} alt={realAlt} imgStyle={customImgStyle} />
   )}
 </article>
-
-<style>
-  .image-with-link {
-    max-width: 100%;
-    /* 레이아웃에 맞춰 inline-block이나 block을 선택하세요 */
-    display: inline-block; 
-  }
-  
-  /* a 태그가 이미지를 감싸고 있을 때를 대비한 처리 */
-  .image-with-link a {
-    display: block;
-    width: 100%;
-  }
-</style>

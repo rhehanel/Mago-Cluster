@@ -1,0 +1,40 @@
+---
+import TimeDisplay from '../glob/TimeDisplay.astro';
+import GlobalImage from '../GlobalImage.astro';
+
+interface Props {
+  item: any;
+  targetUrl: string;
+  timeData: any;
+}
+const { item, targetUrl, timeData } = Astro.props;
+const title = item.data.title;
+---
+<article class="timeline-item scrap-item col-span-4 md:col-span-3">
+  <div class="title">
+    <a href={targetUrl}>
+        <h2>{title}</h2>
+    </a>
+    {timeData && <TimeDisplay timeData={timeData} />}
+  </div>
+  <a href={targetUrl}>
+  {item.thumbnail && (
+    <div class="thumb-wrap">
+        <a href={targetUrl}>
+        {/* 💡 기본 img 태그 대신 GlobalImage 사용 */}
+        <GlobalImage 
+          src={item.thumbnail} 
+          alt={title} 
+          imgStyle={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+        />
+        </a>
+    </div>
+  )}
+  </a>
+  <a href={targetUrl}>{item.excerpt && <p class="excerpt">{item.excerpt}</p>}</a>
+</article>
+
+<style>
+  /* Scrap 전용 커스텀 스타일 영역 */
+  .scrap-item { border-style: dashed; }
+</style>

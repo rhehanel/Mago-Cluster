@@ -1,44 +1,67 @@
 ---
-import { getCollection, getEntry, render } from 'astro:content';
+import { getCollection, render } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import OrderedContent from '../../components/OrderedContent.astro';
 
+import Title from '../../components/glob/Title.astro';
+import TimeDisplay from '../../components/glob/TimeDisplay.astro';
+import PeopleList from '../../components/glob/People.astro';
+
 export const prerender = true;
 
-const { slug } = Astro.params;
-if (!slug) throw new Error('Slug not found');
+export async function getStaticPaths() {
+  const allPosts = await getCollection('scraps');
 
-const allScraps = await getCollection('scraps');
-const scrap =
-  allScraps.find(
-    (item) => item.id === slug || item.data?.slug === slug,
-  ) || (await getEntry('scraps', slug));
+  return allPosts.map((post) => {
+    const cleanSlug = post.id
+      .replace(/\/index$/, '')
+      .replace(/\.(mdoc|md|mdx)$/, '')
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-');
 
-if (!scrap) throw new Error(`No post found for slug: ${slug}`);
+    return {
+      params: { slug: cleanSlug },
+      props: { post },
+    };
+  });
+}
 
-const { Content } = await render(scrap);
-const blocks = scrap.data.blocks ?? [];
+const { post } = Astro.props;
+const { Content } = await render(post);
+const hasBodyContent = Boolean(post.body && post.body.trim().length > 0);
+
+// 💡 변경된 그리드형 markdocSize 스키마 데이터 추출
+const markdocSizeField = post.data.markdocSize;
+const isCustom = markdocSizeField?.discriminant === true;
+const markdocSize = isCustom ? markdocSizeField.value ?? {} : {};
+
+// width 대신 gridSpan (12분할 그리드 폭, 기본값 '12') 사용
+const markdocSpan = markdocSize.gridSpan || '12';
+const markdocHeight = markdocSize.height || 'max-content';
+const markdocMargin = markdocSize.margin === true ? '0 auto' : 'unset';
 ---
 
-<Layout title={scrap.data.title}>
-  <article class="scrap-container">
-    <h1>{scrap.data.title}</h1>
-    <p>{scrap.data.time}</p>
+<Layout title={post.data.title}>
+  <section class="title-section">
+    <Title title={post.data.title} secondTitle={post.data.secondTitle} />
+    <PeopleList people={post.data.people} />
+    {post.data.displayTime && (
+      <div class="time-data flex">
+        <span>☀︎</span>
+        <TimeDisplay timeData={post.data.displayTime} />
+      </div>
+    )}
+  </section>
 
-    <OrderedContent
-      blocks={blocks}
-      Content={Content}
-      markdocWidth="100%"
-      markdocHeight="max-content"
-      markdocMargin="unset"
-    />
-  </article>
+  {/* 💡 markdocWidth 대신 markdocSpan 전달 */}
+  <OrderedContent
+    blocks={post.data.blocks ?? []}
+    Content={Content}
+    hasBodyContent={hasBodyContent}
+    collection="scraps"
+    markdocSpan={markdocSpan}
+    markdocHeight={markdocHeight}
+    markdocMargin={markdocMargin}
+  />
 </Layout>
-
-<style>
-  .scrap-container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 2rem 1rem;
-  }
-</style>

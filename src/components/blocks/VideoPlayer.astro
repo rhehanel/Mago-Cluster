@@ -1,62 +1,98 @@
 ---
 interface Props {
-  link?: {
-    link?: {
-      discriminant: 'google' | 'youtube' | 'vimeo';
-      value: { url: string };
-    };
-    size?: number | null;
-  } | any;
+  link?: any;
+  size?: number | string;
 }
 
-const { link: blockValue } = Astro.props;
+const props = Astro.props;
 
-// 💡 1. 깊어진 데이터 구조에 맞게 안전하게 추출
-const conditionalData = blockValue?.link;
-const mediaType = conditionalData?.discriminant;
-const rawUrl = conditionalData?.value?.url || '';
+// 💡 어떤 복잡한 구조로 값이 들어와도 문자열(URL)을 정확히 추출하는 개선된 유틸리티
+function extractRawUrl(input: any): string {
+  if (!input) return '';
+  if (typeof input === 'string') return input;
+  
+  // 객체인 경우 내부 속성들을 재귀적으로 탐색하거나 주요 키를 먼저 확인
+  if (typeof input === 'object') {
+    // 1. 직접적인 값 형태 확인
+    if (typeof input.link === 'string') return input.link;
+    if (typeof input.url === 'string') return input.url;
+    if (typeof input.value === 'string') return input.value;
 
-// 💡 2. size 옵션(10~100) 반영 (없으면 기본 100%)
-const videoWidth = blockValue?.size ? `${blockValue.size}` : '30%';
-
-let embedUrl = '';
-
-if (rawUrl) {
-  if (mediaType === 'youtube') {
-    const ytMatch = rawUrl.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
-    if (ytMatch && ytMatch[1]) embedUrl = `https://www.youtube.com/embed/${ytMatch[1]}`;
-  } else if (mediaType === 'vimeo') {
-    const vimeoMatch = rawUrl.match(/(?:vimeo\.com\/|player\.vimeo\.com\/video\/)(\d+)/i);
-    if (vimeoMatch && vimeoMatch[1]) embedUrl = `https://player.vimeo.com/video/${vimeoMatch[1]}`;
-  } else if (mediaType === 'google') {
-    const gdMatch = rawUrl.match(/drive\.google\.com\/file\/d\/([^\/]+)/i);
-    if (gdMatch && gdMatch[1]) embedUrl = `https://drive.google.com/file/d/${gdMatch[1]}/preview`;
-    else embedUrl = rawUrl.replace(/\/view.*$/, '/preview');
+    // 2. 중첩된 객체 순회
+    for (const key of Object.keys(input)) {
+      const found = extractRawUrl(input[key]);
+      if (found && typeof found === 'string' && (found.includes('youtube') || found.includes('youtu.be') || found.includes('vimeo') || found.includes('drive.google.com') || found.startsWith('http'))) {
+        return found;
+      }
+    }
   }
+  return '';
 }
+
+// 💡 props 전체 혹은 props.link 중 유효한 URL을 찾아냅니다.
+const rawUrl = extractRawUrl(props.link) || extractRawUrl(props);
+
+// 임베드 URL 자동 변환 함수
+function getEmbedUrl(inputUrl: string): string {
+  if (!inputUrl) return '';
+  const cleanUrl = inputUrl.trim();
+
+  // YouTube 파싱 (일반 watch, short link youtu.be, shorts, embed 모두 대응)
+  const ytMatch = cleanUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})/);
+  if (ytMatch && ytMatch[1]) {
+    return `https://www.youtube.com/embed/${ytMatch[1]}`;
+  }
+
+  // Vimeo 파싱
+  const vimeoMatch = cleanUrl.match(/(?:vimeo\.com\/|player\.vimeo\.com\/video\/)(\d+)/);
+  if (vimeoMatch && vimeoMatch[1]) {
+    return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+  }
+
+  // Google Drive 파싱
+  const driveMatch = cleanUrl.match(/drive\.google\.com\/file\/d\/([^\/\?]+)/);
+  if (driveMatch && driveMatch[1]) {
+    return `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
+  }
+  if (cleanUrl.includes('drive.google.com') && cleanUrl.includes('/view')) {
+    return cleanUrl.replace(/\/view.*$/, '/preview');
+  }
+
+  // 이미 embed 형태이거나 일반 HTTP 링크인 경우
+  if (cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) {
+    return cleanUrl;
+  }
+
+  return '';
+}
+
+const embedUrl = getEmbedUrl(rawUrl);
+
+// 너비(size) 설정 반영 (기본값 100%)
+const rawSize = props.size ?? '100%';
+const containerWidth = typeof rawSize === 'number' ? `${rawSize}%` : rawSize;
 ---
 
-<article class="video-player" style={{ width: videoWidth }}>
+<article class="video-player" style={`width: ${containerWidth};`}>
   {embedUrl ? (
     <div class="video-container">
       <iframe
         src={embedUrl}
-        title={`${mediaType || 'video'} player`}
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        title="Video player"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         allowfullscreen
       ></iframe>
     </div>
   ) : (
     <div class="error-msg">
-      ⚠️ Please enter a valid {mediaType || 'video'} URL.
+      ⚠️ Please enter a valid video URL. (Input was: {String(rawUrl || 'empty')})
     </div>
   )}
 </article>
 
 <style>
   .video-player {
-    margin: 0;
-    display: inline-block;
+    display: block;
     max-width: 100%;
   }
   .video-container {

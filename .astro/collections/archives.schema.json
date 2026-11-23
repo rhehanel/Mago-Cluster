@@ -5,29 +5,30 @@
     "title": {
       "type": "string"
     },
-    "slug": {
+    "secondTitle": {
       "type": "string"
     },
-    "originaltitle": {
-      "type": "string"
-    },
+    "publishDate": {},
+    "displayTime": {},
     "coverImage": {
       "type": "string"
     },
-    "time": {},
     "tags": {
       "type": "array",
       "items": {}
     },
     "people": {},
-    "works": {
-      "type": "array",
-      "items": {}
+    "markdocSize": {},
+    "contentDivision": {
+      "type": "boolean"
     },
     "blocks": {},
-    "markdocSize": {},
     "$schema": {
       "type": "string"
     }
-  }
+  },
+  "required": [
+    "title",
+    "publishDate"
+  ]
 }

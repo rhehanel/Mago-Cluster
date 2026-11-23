@@ -5,25 +5,30 @@
     "title": {
       "type": "string"
     },
-    "originaltitle": {
+    "secondTitle": {
       "type": "string"
     },
+    "publishDate": {},
+    "displayTime": {},
     "coverImage": {
       "type": "string"
     },
-    "time": {},
     "tags": {
       "type": "array",
       "items": {}
     },
     "people": {},
-    "blocks": {},
     "markdocSize": {},
+    "contentDivision": {
+      "type": "boolean"
+    },
+    "blocks": {},
     "$schema": {
       "type": "string"
     }
   },
   "required": [
-    "title"
+    "title",
+    "publishDate"
   ]
 }

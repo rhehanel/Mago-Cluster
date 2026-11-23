@@ -2,7 +2,6 @@
 // src/components/GlobalImage.astro
 import { Image } from 'astro:assets';
 
-// 💡 Props를 통해 외부 컴포넌트(RowImages 등)에서 스타일을 직접 주입받을 수 있게 열어둡니다.
 interface Props {
   src: any;
   alt?: string;
@@ -12,9 +11,32 @@ interface Props {
 
 const { src, alt = "Image", imgStyle, imgClass = "" } = Astro.props;
 
-let resolvedSrc = src;
+// 💡 1. 전달된 src가 무엇이든 간에 실제 경로 문자열이나 이미지 객체를 안전하게 추출하는 유틸리티
+function resolveSrcInput(input: any): any {
+  if (!input) return null;
+  if (input instanceof Promise) return input; // 나중에 await 처리됨
+  if (typeof input === 'string') return input;
+  
+  if (typeof input === 'object') {
+    if (typeof input.src === 'string') return input.src;
+    if (input.src && typeof input.src === 'object') return input.src;
+    if (typeof input.image === 'string') return input.image;
+    if (typeof input.url === 'string') return input.url;
+    if (typeof input.value === 'string') return input.value;
+
+    // 객체 내부를 순회하며 유효한 경로 문자열 탐색
+    for (const key of Object.keys(input)) {
+      const found = resolveSrcInput(input[key]);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+let resolvedSrc = resolveSrcInput(src);
 if (resolvedSrc instanceof Promise) {
   resolvedSrc = await resolvedSrc;
+  resolvedSrc = resolveSrcInput(resolvedSrc);
 }
 
 const R2_DOMAIN = import.meta.env.PUBLIC_R2_DOMAIN || '';
@@ -57,12 +79,12 @@ if (useR2 && fileName) {
         finalImageSrc = resolvedSrc; 
       }
     } else {
+      // 💡 경로에 markers가 없더라도 절대경로/상대경로 형태라면 그대로 렌더링 시도
       finalImageSrc = resolvedSrc; 
     }
   }
 }
 
-// 💡 밖에서 imgStyle을 안 주면 기본 스타일을 먹이고, 주면 받은 걸 그대로 씁니다.
 const defaultStyle = { maxWidth: '100%', height: 'auto' };
 const appliedStyle = imgStyle || defaultStyle;
 ---
@@ -79,6 +101,6 @@ const appliedStyle = imgStyle || defaultStyle;
   <img src={finalImageSrc} alt={alt || "이미지"} loading="lazy" style={appliedStyle} class={imgClass} />
 ) : (
   <div style="padding: 1rem; border: 1px dashed red; color: red;">
-    ⚠️ 이미지를 불러올 수 없거나 경로가 비어있습니다.
+    ⚠️ 이미지를 불러올 수 없거나 경로가 비어있습니다. (받은 값: {JSON.stringify(src)?.slice(0, 100)})
   </div>
 )}

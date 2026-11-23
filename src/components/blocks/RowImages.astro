@@ -5,74 +5,99 @@ interface Props {
   rowImages?: any;
 }
 
-const { rowImages } = Astro.props;
+const props = Astro.props;
+const data = props.rowImages?.rowImages ? props.rowImages.rowImages : (props.rowImages ?? props);
 
-// 1. 컨테이너 너비 설정
-const containerWidth = rowImages?.width?.value || '100%';
+function extractString(input: any): string {
+  if (!input) return '';
+  if (typeof input === 'string') return input;
+  if (typeof input === 'function' || typeof input !== 'object') return '';
+  if (typeof input.link === 'string') return input.link;
+  if (typeof input.url === 'string') return input.url;
+  if (typeof input.value === 'string') return input.value;
 
-// 2. 가로 정렬 및 풀위스(Full Width) 설정
-const isFullWidth = rowImages?.alignment?.discriminant === true;
-const alignValue = rowImages?.alignment;
-let justifyContent = 'flex-start';
-let isStretch = false;
-if (alignValue === 'center'){ justifyContent = 'center' 
-  } else if (alignValue === 'flex-end') { justifyContent = 'baseline'
-  } else if (alignValue === 'stretch') { justifyContent = 'stretch', isStretch = true
-  } else justifyContent = 'flex-start' ;
+  for (const key of Object.keys(input)) {
+    const found = extractString(input[key]);
+    if (found && typeof found === 'string' && !found.includes('native code')) return found;
+  }
+  return '';
+}
 
+const containerWidth = data?.containerWidth || '100%';
+const wrapMode = data?.wrapMode || 'wrap'; // 'wrap' | 'fit' | 'scroll'
+const alignItems = data?.alignItems || 'stretch'; // 'stretch' | 'flex-start' | 'center' | 'flex-end' | 'baseline'
 
-// 3. ⭐️ 스크롤 및 높이 설정 (핵심 변경 사항)
-// discriminant가 true면 스크롤 사용(Use Scroll), false면 스크롤 미사용
-const useScroll = rowImages?.scrollX?.discriminant === true;
+// 💡 Stretch 옵션 여부 확인
+const isStretch = alignItems === 'stretch';
 
-// 스크롤을 적용했을 때만 입력한 height 값을 사용하고, 아니면 auto로 둡니다.
-const containerHeight = useScroll ? rowImages?.scrollX?.value : 'auto';
-
-// 4. 이미지 데이터 추출
-const rawImages = rowImages?.images?.value || rowImages?.images || [];
+const rawImages = data?.images?.value || data?.images || [];
 const images = Array.isArray(rawImages) ? rawImages : [];
 ---
 
 <div 
-  class="row-images-container"
+  class={`row-images-container mode-${wrapMode}`}
   style={{
-    width: isFullWidth ? '100%' : containerWidth,
-    height: containerHeight,
-    alignItems: justifyContent,
-    overflowX: useScroll ? 'scroll' : 'visible',
-    flexWrap: 'nowrap', // 항상 가로 한 줄로 배치
-    border: useScroll ? '1px solid #7b0513' : 'none',
-    padding: useScroll ? '0.4rem' : '0',
-    background: useScroll ? '#d47979aa' : 'none',
+    width: containerWidth,
+    flexWrap: wrapMode === 'wrap' ? 'wrap' : 'nowrap',
+    overflowX: wrapMode === 'scroll' ? 'scroll' : 'visible',
+    alignItems: alignItems,
   }}>
-  {images.map((item: any) => {
-    // ⭐️ 스크롤을 안 쓸 땐 flex: 1이 되므로 개별 너비는 무시(auto), 스크롤 쓸 땐 입력한 size 적용
-    const imgWidth = useScroll ? (item.size || 'auto') : 'auto';
-    const hideBorder = item.border === true;
+  {images.map((currItem: any) => {
+    const altText = currItem.alt || '';
+    const showCaption = currItem.caption === true;
+    const rawLink = extractString(currItem.link);
+    const linkUrl = (rawLink.startsWith('http://') || rawLink.startsWith('https://') || rawLink.startsWith('/')) ? rawLink : '';
+
+    // Stretch이면서 스크롤 모드일 때만 높이를 강제 고정 (280px), 그 외엔 사용자가 지정한 높이 또는 auto
+    const baseContainerHeight = currItem.height 
+      ? currItem.height 
+      : (wrapMode === 'scroll' && isStretch ? '280px' : 'auto');
       
-    // GlobalImage로 넘겨줄 인라인 스타일 객체
-    const customImgStyle = {
-      width: 'auto',
-      height: isStretch ? justifyContent : 'auto' ,
+    const imgWidthAttr = currItem.width ? currItem.width : '';
+
+    let wrapperFlex = '';
+    let wrapperWidth = '';
+
+    if (wrapMode === 'wrap') {
+      wrapperFlex = imgWidthAttr ? `0 0 ${imgWidthAttr}` : 'auto';
+      wrapperWidth = imgWidthAttr || 'auto';
+    } else if (wrapMode === 'fit') {
+      wrapperFlex = '1 1 0px';
+      wrapperWidth = 'auto';
+    } else {
+      wrapperFlex = '0 0 auto';
+      wrapperWidth = imgWidthAttr ? imgWidthAttr : 'auto';
+    }
+
+    // 💡 stretch일 때만 cover + 100% 높이 / 그 외에는 contain + 비율 보존
+    const imgStyle = {
+      width: imgWidthAttr,
+      height: isStretch ? '100%' : (currItem.height || 'auto'),
       display: 'block',
-      objectFit: 'cover',
-      border: hideBorder ? 'none' : '1px solid #7b0513'
+      objectFit: isStretch ? 'cover' : 'contain',
     };
 
     return (
-      <div
-        class="image-item"
+      <div 
+        class="image-item" 
         style={{
-          width: imgWidth,
-          flex: useScroll ? 'none' : 1, // 💡 스크롤 미적용 시 1:1:1 비율로 균등 분할
+          flex: wrapperFlex,
+          width: wrapperWidth,
+          height: isStretch ? baseContainerHeight : (currItem.height || 'auto'),
+          minWidth: wrapMode === 'fit' ? '0' : 'auto'
         }}>
-          {item.link ? (
-            <a href={item.link} target="_blank" rel="noopener noreferrer" class="image-link">
-              <GlobalImage src={item.image} alt="Row Image" imgStyle={customImgStyle} />
+        <div class={`image-wrapper ${isStretch ? 'is-stretch' : 'is-natural'}`}>
+          {linkUrl ? (
+            <a href={linkUrl} target="_blank" rel="noopener noreferrer" class="image-link">
+              <GlobalImage src={currItem.image} alt={altText} imgStyle={imgStyle} />
             </a>
           ) : (
-            <GlobalImage src={item.image} alt="Row Image" imgStyle={customImgStyle} />
+            <GlobalImage src={currItem.image} alt={altText} imgStyle={imgStyle} />
           )}
+        </div>
+        {showCaption && altText && (
+          <p class="image-caption">{altText}</p>
+        )}
       </div>
     );
   })}
@@ -83,32 +108,72 @@ const images = Array.isArray(rawImages) ? rawImages : [];
     display: flex;
     flex-direction: row;
     gap: 0.4rem;
-    scrollbar-color: auto !important;
-    scrollbar-width: auto !important;
+    max-width: 100%;
   }
 
-  /* 가로 스크롤바 커스텀 스타일 */
-  .row-images-container::-webkit-scrollbar {
-    height: 5px;
-    width: 5px;
-    display: block !important;
+  .row-images-container.mode-scroll {
+    border: 1px solid #7b0513;
+    padding: 0.6rem 0.6rem 0.9rem 0.6rem;
+    background: #d47979aa;
+    scrollbar-color: auto;
+    scrollbar-width: auto;
   }
-  .row-images-container::-webkit-scrollbar-track {
-    background: transparent; 
+
+  .row-images-container.mode-scroll::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+  }
+  .row-images-container.mode-scroll::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
     border-radius: 5px;
+    margin: 0 0.4rem;
   }
-  .row-images-container::-webkit-scrollbar-thumb {
+  .row-images-container.mode-scroll::-webkit-scrollbar-thumb {
     border-radius: 5px;
     background-color: #7b0513;
   }
 
   .image-item {
-    max-height: min-content;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    box-sizing: border-box;
+  }
+
+  /* Stretch 모드일 때만 이미지 박스가 남은 세로 공간을 가득 채움 */
+  .image-wrapper.is-stretch {
+    flex: 1;
+    overflow: hidden;
   }
 
   .image-link {
     display: block;
     width: 100%;
     height: 100%;
+  }
+
+  /* Stretch 모드: 이미지를 강제로 채우고 자름 */
+  .image-wrapper.is-stretch .image-link :global(img) {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+  }
+
+  /* Non-Stretch 모드 (Top, Center, Bottom 등): 이미지 비율을 원본대로 유지 */
+  .image-wrapper.is-natural .image-link :global(img) {
+    width: 100% !important;
+    height: auto !important;
+    object-fit: contain !important;
+  }
+
+  .image-caption {
+    font-size: 0.75rem;
+    color: #7b0513;
+    margin: 0;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 0;
   }
 </style>

@@ -1,0 +1,132 @@
+---
+import TimeDisplay from '../glob/TimeDisplay.astro';
+import GlobalImage from '../GlobalImage.astro';
+import VideoPlayer from '../blocks/VideoPlayer.astro'; // 💡 비디오 블록 렌더링을 위해 추가
+
+interface Props {
+  item: any;
+  targetUrl: string;
+  timeData: any;
+}
+const { item, targetUrl, timeData } = Astro.props;
+const title = item.data.title;
+
+// 💡 1. 커스텀 블럭 배열에서 가장 첫 번째 블럭 추출
+const firstBlock = item.data.blocks && item.data.blocks.length > 0 ? item.data.blocks[0] : null;
+---
+
+<article class="timeline-item archive-item col-span-12">
+  {firstBlock ? (
+    /* 💡 상황 A: 첫 번째 블록이 비디오인 경우 */
+    firstBlock.discriminant === 'video' ? (
+      <a href={targetUrl} class="archive-media-link">
+        <div class="media-wrap video-wrap">
+          <VideoPlayer {...firstBlock.value} />
+        </div>
+      </a>
+    ) 
+    /* 💡 상황 B: 첫 번째 블록이 단일 이미지인 경우 */
+    : firstBlock.discriminant === 'image' && firstBlock.value?.image ? (
+      <div class="media-wrap thumb-wrap img-block">
+        <a href={targetUrl} class="archive-media-link">
+          <GlobalImage 
+            src={firstBlock.value.image} 
+            alt={firstBlock.value.alt || title} 
+          />
+        </a>
+      </div>
+    ) 
+    /* 💡 상황 C: 첫 번째 블록이 이미지 갤러리(Row/Column Images)인 경우 */
+    : (firstBlock.discriminant === 'rowImages' || firstBlock.discriminant === 'columnImages') && firstBlock.value?.images?.length > 0 ? (
+      <div class="gallery-wrap">
+        {/* 최대 4장까지만 모아서 미리보기 갤러리로 표시 */}
+        {firstBlock.value.images.slice(0, 6).map((imgObj: any) => (
+          <div class="gallery-item img-block">
+            <a href={targetUrl} class="archive-media-link">
+              <GlobalImage 
+                src={imgObj.image}
+                alt={imgObj.alt || title}
+              />
+            </a>
+          </div>
+        ))}
+      </div>
+    ) 
+    /* 💡 상황 D: 블록은 있지만 시각 매체가 아닌 텍스트/리스트 류인 경우 */
+    : (
+      <div class="text-fallback-wrap">
+        <p class="excerpt">{item.excerpt}</p>
+      </div>
+    )
+  ) : item.thumbnail ? (
+    /* 💡 상황 E: 블럭은 비어있으나 커버 이미지가 등록된 경우 */
+    <div class="media-wrap thumb-wrap">
+      <a href={targetUrl} class="archive-media-link">
+        <GlobalImage 
+          src={item.thumbnail} 
+          alt={title} 
+          imgStyle={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+        />
+      </a>
+    </div>
+  ) : item.excerpt ? (
+    /* 💡 상황 F: 완전한 순수 텍스트 마크독 문서인 경우 */
+    <div class="text-fallback-wrap">
+      <p class="excerpt">{item.excerpt}</p>
+    </div>
+  ) : null}
+</article>
+
+<style>
+  .archive-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .archive-media-link {
+    display: block;
+    width: 100%;
+  }
+
+  /* 단일 비디오/이미지 래퍼 */
+  .media-wrap {
+    width: 100%;
+    background: #000;
+    position: relative;
+    border: 1px solid #7b0513;
+  }
+
+  .media-wrap :global(video),
+  .media-wrap :global(iframe) {
+    width: 100%;
+    height: 100%;
+    border: none;
+    object-fit: cover;
+  }
+
+  /* 💡 갤러리 블록 미리보기 스타일 (바둑판 배열) */
+  .gallery-wrap {
+    display: flex;
+    gap: 0.4rem;
+  }
+
+  /* 마크독 텍스트 블록 폴백 스타일 */
+  .text-fallback-wrap {
+    width: 100%;
+    padding: 0.8rem;
+    box-sizing: border-box;
+    background: rgba(123, 5, 19, 0.05);
+    border: 1px solid rgba(123, 5, 19, 0.2);
+  }
+
+  .img-block {
+    opacity: 0.9;
+    transition: all 0.2s ease-in-out;
+  }
+
+  .img-block:hover {
+    opacity: 1;
+  }
+  
+</style>

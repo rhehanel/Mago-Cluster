@@ -1,0 +1,38 @@
+---
+import TimeDisplay from '../glob/TimeDisplay.astro';
+import GlobalImage from '../GlobalImage.astro'; 
+
+interface Props {
+  item: any;
+  targetUrl: string;
+  timeData: any; 
+}
+
+const { item, targetUrl, timeData } = Astro.props;
+const title = item.data.title;
+---
+<article class="timeline-item post-item col-span-4 md:col-span-8">
+    <div class="title">
+        <a href={targetUrl}>
+            <h2>{title}</h2>
+        </a>
+        {timeData && <TimeDisplay timeData={timeData} />}
+    </div>
+    <a href={targetUrl}>
+    {item.thumbnail && (
+      <div class="thumb-wrap">
+        {/* 💡 기본 img 태그 대신 GlobalImage 사용 */}
+        <GlobalImage 
+          src={item.thumbnail} 
+          alt={title} 
+          imgStyle={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+        />
+      </div>
+    )}
+    </a>
+    <div class="meta">
+        <a href={targetUrl}>
+            {item.excerpt && <p class="excerpt">{item.excerpt}</p>}
+        </a>
+    </div>
+</article>

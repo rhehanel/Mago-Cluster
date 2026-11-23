@@ -19,6 +19,9 @@
     },
     "people": {},
     "markdocSize": {},
+    "contentDivision": {
+      "type": "boolean"
+    },
     "blocks": {},
     "$schema": {
       "type": "string"

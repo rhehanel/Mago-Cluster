@@ -29,68 +29,41 @@ export async function getStaticPaths() {
 
 const { post } = Astro.props;
 const { Content } = await render(post);
+const hasBodyContent = Boolean(post.body && post.body.trim().length > 0);
 
+// 💡 변경된 그리드형 markdocSize 스키마 데이터 추출
 const markdocSizeField = post.data.markdocSize;
 const isCustom = markdocSizeField?.discriminant === true;
 const markdocSize = isCustom ? markdocSizeField.value ?? {} : {};
 
-const markdocWidth = markdocSize.width || '50%';
+// width 대신 gridSpan (12분할 그리드 폭, 기본값 '12') 사용
+const markdocSpan = markdocSize.gridSpan || '12';
 const markdocHeight = markdocSize.height || 'max-content';
 const markdocMargin = markdocSize.margin === true ? '0 auto' : 'unset';
+
+const contentDivision = post.data.contentDivision;
 ---
 
 <Layout title={post.data.title}>
-  <div>
-    <section class="title">
-      {/* 1. 타이틀 모듈 */}
-      <Title title={post.data.title} secondTitle={post.data.secondTitle} />
+  <section class="title-section">
+    <Title title={post.data.title} secondTitle={post.data.secondTitle} />
+    <PeopleList people={post.data.people} />
+    {post.data.displayTime && (
+      <div class="time-data flex">
+        <span>☀︎</span>
+        <TimeDisplay timeData={post.data.displayTime} />
+      </div>
+    )}
+  </section>
 
-      {post.data.displayTime && (
-        <div class="time-data flex">
-          <span>☀︎</span>
-          <TimeDisplay timeData={post.data.displayTime} />
-        </div>
-      )}
-
-      {/* 3. 인물(People) 목록 모듈 */}
-      <PeopleList people={post.data.people} />
-    </section>
-
-    {/* 본문 및 블록 렌더링 */}
-    <OrderedContent
-      blocks={post.data.blocks ?? []}
-      Content={Content}
-      markdocWidth={markdocWidth}
-      markdocHeight={markdocHeight}
-      markdocMargin={markdocMargin}
-    />
-  </div>
+  {/* 💡 markdocWidth 대신 markdocSpan 전달 */}
+  <OrderedContent
+    blocks={post.data.blocks ?? []}
+    Content={Content}
+    hasBodyContent={hasBodyContent}
+    markdocSpan={markdocSpan}
+    markdocHeight={markdocHeight}
+    markdocMargin={markdocMargin}
+    contentDivision={contentDivision}
+  />
 </Layout>
-
-<style is:global>
-  header {
-    width: min-content;
-  }
-
-  .title {
-    width: max-content;
-    max-width: 81.2rem;
-    min-width: 30rem;
-    padding: 0.3rem 1rem 0.5rem 0.7rem;
-    margin-bottom: 0.4rem;
-    border: 1px solid #7b0513;
-    background: #7b0513ee;
-    color: #d47979;
-  }
-
-  .title h1 {
-    color: #d47979;
-  }
-
-  .title .time-data {
-    display: flex;
-    gap: 0.2rem;
-    font-size: 0.7rem;
-    color: #d47979;
-  }
-</style>

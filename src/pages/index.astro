@@ -1,108 +1,297 @@
 ---
 import { getCollection } from 'astro:content';
-import { getImage } from 'astro:assets';
 import Layout from '../layouts/Layout.astro';
-import { createReader } from '@keystatic/core/reader';
-import keystaticConfig from '../../keystatic.config';
 
-export const prerender = true;
+import TimeDisplay from '../components/glob/TimeDisplay.astro';
+import PostItem from '../components/timeline/PostItem.astro';
+import WorkItem from '../components/timeline/WorkItem.astro';
+import ArchiveItem from '../components/timeline/ArchiveItem.astro';
+import ScrapItem from '../components/timeline/ScrapItem.astro';
 
 const posts = await getCollection('posts');
 const works = await getCollection('works');
+const archives = await getCollection('archives');
+const scraps = await getCollection('scraps');
 
-// 💡 터미널(VS Code 하단 창)에 뭐라고 찍히는지 확인!
-console.log('불러온 포스트 개수:', posts.length);
-console.log('불러온 워크 개수:', works.length);
+function getSortDate(data: any) {
+  let dateString = null;
+  const displayTime = data.displayTime;
 
-// 1. 모든 아이템 통합 및 연도 정렬
-const allItems = [
-  ...posts.map(post => ({ ...post, type: 'post' })),
-  ...works.map(work => ({ ...work, type: 'work' }))
-];
-
-const reader = createReader(process.cwd(), keystaticConfig);
-const settings = await reader.singletons.settings.read();
-
-const sortedItems = allItems.sort(() => Math.random() - 0.5);
-
-// 2. ⭐️ 비동기 이미지 처리를 HTML 밖(Script)에서 안전하게 완결
-const itemsWithImages = await Promise.all(
-  sortedItems.map(async (item) => {
-    let optimizedImgSrc = null;
-    let imgWidth = null;
-    let imgHeight = null;
-
-    const cover = item.data.coverImage;
-
-    // A. 이미지 데이터가 Astro 에셋 객체(width, height 존재)인 경우
-    if (cover && typeof cover === 'object' && 'width' in cover && 'height' in cover) {
-      try {
-        const originalWidth = cover.width;
-        const originalHeight = cover.height;
-        const isVertical = originalWidth > originalHeight;
-
-        const targetWidth = isVertical && originalWidth > 450 ? 450 :
-          !isVertical && originalWidth > 300 ? 300 : originalWidth;
-        const targetHeight = Math.round((originalHeight / originalWidth) * targetWidth);
-
-        const res = await getImage({
-          src: cover,
-          width: targetWidth,
-          height: targetHeight,
-          format: 'webp',
-        });
-        
-        optimizedImgSrc = res.src;
-        imgWidth = res.attributes.width;
-        imgHeight = res.attributes.height;
-      } catch (e) {
-        console.error('Image optimization failed for:', item.id, e);
+  if (displayTime) {
+    if (displayTime.discriminant === 'date' && displayTime.value?.value) {
+      dateString = displayTime.value.value;
+    } else if (displayTime.discriminant === 'year' && displayTime.value?.value) {
+      dateString = `${displayTime.value.value}-01-01`;
+    } else if (displayTime.discriminant === 'time') {
+      const timeData = displayTime.value;
+      if (timeData?.discriminant === false && timeData.value?.date) {
+        dateString = timeData.value.date;
       }
-    } 
-    // B. 이미지 데이터가 일반 문자열(경로/URL)인 경우
-    else if (typeof cover === 'string') {
-      optimizedImgSrc = cover;
+    }
+  }
+
+  const finalString = dateString || data.publishDate;
+  const parsedDate = new Date(finalString);
+  return isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
+}
+
+function extractFirstVideo(data: any, body?: string) {
+  const blocks = data.blocks || [];
+  for (const block of blocks) {
+    if (!block.value) continue;
+    if (block.discriminant === 'video') {
+      return block.value;
+    }
+  }
+
+  if (body) {
+    const videoTagMatch = body.match(/<video[^>]*src=["'](.*?)["']/i);
+    if (videoTagMatch && videoTagMatch[1]) {
+      return { url: videoTagMatch[1], isDirectFile: true };
     }
 
-    // 슬러그 뒤의 /index 꼬리 제거
-    const cleanSlug = item.id.replace(/\/index$/, '');
+    const iframeMatch = body.match(/<iframe[^>]*src=["'](.*?)["']/i);
+    if (iframeMatch && iframeMatch[1]) {
+      return { url: iframeMatch[1], isEmbed: true };
+    }
 
-    return {
-      ...item,
-      cleanSlug,
-      optimizedImgSrc,
-      imgWidth,
-      imgHeight,
-    };
-  })
-);
+    const videoUrlMatch = body.match(/(https?:\/\/[\S]+\.(?:mp4|webm|ogv))/i);
+    if (videoUrlMatch && videoUrlMatch[1]) {
+      return { url: videoUrlMatch[1], isDirectFile: true };
+    }
+  }
+
+  return null;
+}
+
+function extractFirstImage(data: any, body?: string) {
+  if (data.coverImage) return data.coverImage;
+  const blocks = data.blocks || [];
+  for (const block of blocks) {
+    if (!block.value) continue;
+    if (block.discriminant === 'image' && block.value.image) return block.value.image;
+    if ((block.discriminant === 'rowImages' || block.discriminant === 'columnImages') && block.value.images?.length > 0) {
+      if (block.value.images[0]?.image) return block.value.images[0].image;
+    }
+  }
+  if (body) {
+    const mdImageMatch = body.match(/!\[.*?\]\((.*?)\)/);
+    if (mdImageMatch && mdImageMatch[1]) return mdImageMatch[1];
+    const htmlImageMatch = body.match(/<img.*?src=["'](.*?)["']/);
+    if (htmlImageMatch && htmlImageMatch[1]) return htmlImageMatch[1];
+  }
+  return null;
+}
+
+function extractExcerpt(body?: string) {
+  if (!body) return '';
+  
+  // 💡 HTML 및 마크다운 특수문자 제거 시 \n(줄바꿈)은 유지
+  const plainText = body
+    .replace(/<[^>]*>?/gm, '')
+    .replace(/[#*_[\]>]/g, '')
+    .replace(/\n{3,}/g, '\n\n') // 3번 이상 연속된 줄바꿈은 2번(단락 구분)으로 정리
+    .trim();
+
+  return plainText.length > 300 ? plainText.substring(0, 300) + '...' : plainText;
+}
+
+// 1. 전체 데이터 수집 및 정렬
+const allItems = [
+  ...posts.map(p => ({ ...p, collectionType: 'posts' })),
+  ...works.map(w => ({ ...w, collectionType: 'works' })),
+  ...archives.map(a => ({ ...a, collectionType: 'archives' })),
+  ...scraps.map(s => ({ ...s, collectionType: 'scraps' }))
+].map(item => ({
+  ...item,
+  sortDate: getSortDate(item.data),
+  video: extractFirstVideo(item.data, item.body),
+  thumbnail: extractFirstImage(item.data, item.body),
+  excerpt: extractExcerpt(item.body)
+}));
+
+allItems.sort((a, b) => b.sortDate.getTime() - a.sortDate.getTime());
+
+// 💡 2. 최신순 포스트를 3개의 컬럼 배열로 분할 (0번 컬럼, 1번 컬럼, 2번 컬럼)
+const NUM_COLUMNS = 3;
+const columns: typeof allItems[] = Array.from({ length: NUM_COLUMNS }, () => []);
+
+allItems.forEach((item, index) => {
+  columns[index % NUM_COLUMNS].push(item);
+});
 ---
 
 <Layout>
-  { settings?.title ? <h1 class="indexTitle">{settings?.title}</h1> : '' }
-  <section>
-    <ul class="imgList">
-      {
-        // 3. HTML 렌더링 부분: 비동기 로직 없이 순수 렌더링만 진행
-        itemsWithImages.map((item) => (
-          <li style="margin-bottom: 2rem;">
-            <a href={`/${item.type}s/${item.cleanSlug}`} style="display: block; margin-top: 8px;">
-              {/* 이미지가 존재하면 렌더링 */}
-              {item.optimizedImgSrc ? (
-                <img
-                  src={item.optimizedImgSrc} 
-                  alt={item.data.title}
-                  width={item.imgWidth || undefined}
-                  height={item.imgHeight || undefined}
-                  loading="lazy"
-                  style="display: block; margin-bottom: 8px; max-width: 100%; height: auto;"
-                />
-              ) : item.data.title }
-            </a>
-            {item.data.title}
-          </li>
-        ))
-      }
-    </ul>
-  </section>
+  <main id="Content">
+    <div class="timeline-masonry">
+      
+      {/* 3개의 컬럼을 생성하고 각 컬럼 내에서 아이템을 순서대로 쌓음 */}
+      {columns.map((colItems) => (
+        <div class="masonry-column">
+          {colItems.map((item) => {
+            const rawId = item.id;
+            const cleanSlug = (item as any).slug || rawId
+              .replace(/\/index$/, '')
+              .replace(/\.(mdoc|md|mdx)$/, '')
+              .toLowerCase()
+              .trim()
+              .replace(/\s+/g, '-');
+              
+            const targetUrl = `/${item.collectionType}/${cleanSlug}`;
+            const timeData = item.data.displayTime || null;
+
+            switch (item.collectionType) {
+              case 'posts':
+                return <PostItem item={item} targetUrl={targetUrl} timeData={timeData} />;
+              case 'works':
+                return <WorkItem item={item} targetUrl={targetUrl} timeData={timeData} />;
+              // case 'archives':
+              //   return <ArchiveItem item={item} targetUrl={targetUrl} timeData={timeData} />;
+              case 'scraps':
+                return <ScrapItem item={item} targetUrl={targetUrl} timeData={timeData} />;
+              default:
+                return null;
+            }
+          })}
+        </div>
+      ))}
+
+      {/* 💡 추가된 모달창 (.masonry-column과 같은 레벨) */}
+      {/* 기본적으로 숨겨져 있으며, is-open 클래스가 추가되면 화면 중앙에 표시됩니다. */}
+      <div id="timeline-modal" class="modal-overlay" aria-hidden="false">
+        <div class="modal-window" role="dialog" aria-modal="true">
+          <button type="button" id="modal-close-btn" class="modal-close-btn" aria-label="닫기">
+            &times;
+          </button>
+          <div id="modal-body" class="modal-body">
+            REVOLUTION
+            <br>
+            IS
+            <br>
+            NOW
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
 </Layout>
+
+<script>
+  const modal = document.getElementById('timeline-modal');
+  const closeBtn = document.getElementById('modal-close-btn');
+
+  // 초기 로드 시 모달이 열려 있으므로 배경 스크롤 잠금
+  if (modal && !modal.classList.contains('is-hidden')) {
+    document.body.style.overflow = 'hidden';
+  }
+
+  // 모달 닫기 함수
+  function closeModal() {
+    if (!modal) return;
+    modal.classList.add('is-hidden');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = ''; // 배경 스크롤 복원
+  }
+
+  // 1. 우측 상단 X 버튼 클릭 시 닫기
+  closeBtn?.addEventListener('click', closeModal);
+
+  // 2. 모달 영역 바깥(오버레이) 클릭 시 닫기
+  modal?.addEventListener('click', (event) => {
+    if (event.target === modal) {
+      closeModal();
+    }
+  });
+
+  // 3. ESC 키 입력 시 닫기
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !modal?.classList.contains('is-hidden')) {
+      closeModal();
+    }
+  });
+</script>
+
+<style is:global>
+  /* 💡 Flex 기반 메이슨리 컨테이너 */
+  .timeline-masonry {
+    display: flex;
+    gap: 0.4rem;
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  /* 💡 각 세로 열 (Column): 자식 요소들이 위에서 아래로 0.4rem 간격으로 차곡차곡 배치됨 */
+  .masonry-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-width: 0; /* Flex 자식 요소가 부모 너비를 이탈하는 것 방지 */
+  }
+
+  .timeline-item {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* 💡 모달 오버레이 (접속 시 기본 표시) */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex; /* 기본 표시 */
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 1rem;
+    box-sizing: border-box;
+    text-align: center;
+  }
+
+  /* 모달 닫힘 상태 */
+  .modal-overlay.is-hidden {
+    display: none;
+  }
+
+  /* 모달 본체 */
+  .modal-window {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    max-height: 85vh;
+    background-color: #7b0513;
+    padding: 1rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    overflow-y: auto;
+    box-sizing: border-box;
+    color: #d47979;
+    font-size: 3rem;
+    line-height: 3.4rem;
+  }
+
+  /* 우측 상단 X 닫기 버튼 */
+  .modal-close-btn {
+    position: absolute;
+    top: 0.1rem;
+    right: 0.1rem;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    font-size: 2rem;
+    line-height: 1;
+    color: #d47979;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+
+  /* 모바일/태블릿 반응형 */
+  @media (max-width: 768px) {
+    .timeline-masonry {
+      flex-direction: column;
+    }
+  }
+</style>

@@ -116,7 +116,7 @@ html {
   font-family: "Hamlet", sans-serif;
   background: #7b0513;
   overscroll-behavior: none;
-  overflow: overlay;
+  c: overlay;
 }
 
 h1,
@@ -129,10 +129,6 @@ p,
 ul,
 ol {
   color: #7b0513;
-}
-
-a {
-  color: #604242;
 }
 
 img {
@@ -150,6 +146,15 @@ body {
   background: repeating-radial-gradient(#7b0513 , #d47979 20%);
 }
 
+hr {
+  padding: 0;
+  border: none;
+  border-top: 2.4px dotted #7b0513;
+  color: #7b0513;
+  margin: 0.84rem 0;
+  text-align: center;
+}
+
 .astro-debug {
   position: fixed;
   z-index: 11111;
@@ -157,7 +162,10 @@ body {
 
 #Content {
   position: fixed;
-  display: block;
+  display: flex;
+  flex-direction: column;
+  padding: 0.4rem;
+  gap: 0.4rem;
   border: #7b0513 solid 1rem;
   overflow-y: scroll;
   top: 0;
@@ -165,6 +173,7 @@ body {
   right: 0;
   bottom: 0;
   background: #d4797966;
+  box-shadow: -1px 2px 64px rgb(111, 5, 18, 0.2) inset;
 }
 
 .navigation {
@@ -210,17 +219,16 @@ article header {
   background: radial-gradient(circle, #d47979cc 10%, #7b0513cc);
 }
 
-#Content h1 {
+h1 {
   font-weight: 300;
   font-size: 0.95rem;
-  line-height: 1.5rem;
-  margin-bottom: 0.2rem;
+  line-height: 1.4rem;
 }
 
-#Content h1.indexTitle {
-    font-size: 10rem;
-    text-align: center;
-    font-family: "Kiya", sans-serif;
+h1.indexTitle {
+  font-size: 10rem;
+  text-align: center;
+  font-family: "Kiya", sans-serif;
     margin-top: 4rem
 }
 
@@ -230,19 +238,6 @@ article header {
 
 .work-container article p img {
   width: 100%;
-}
-
-.title .time-data {
-  display: flex;
-  gap: 0.2rem;
-  font-size: 0.7rem;
-  color:#d47979;
-}
-
-.title .time-data small,
-.title .time-data span {
-  display: block;
-  font-size: 0.7rem;
 }
 
 .list-block {
@@ -262,17 +257,6 @@ article header {
 
 .list-block a {
   color: #7b0513;
-}
-
-.markdoc-content {
-  width: fit-content;
-  padding: 1rem;
-  font-size: 0.8rem;
-}
-
-.markdoc-content article p {
-  margin-bottom: 0.4rem;
-  line-height: 1.25rem;
 }
 
 .artist-list {
@@ -487,3 +471,418 @@ article header {
   box-shadow: 6px 4px 5px rgb(123, 5, 19, 0.4);
 }
 
+/* Content Title Section Display */
+.title-section {
+  width: max-content;
+  max-width: 82rem;
+  min-width: 30rem;
+  padding: 0.4rem 0.85rem 0.5rem;
+  border: 1px solid #7b0513;
+  background: #7b0513ee;
+  color: #d47979;
+}
+
+h1.title {
+  color: #d47979;
+  margin-bottom: 0.2rem;  
+}
+
+
+/* Time Display */
+.title-section .time-data {
+  display: flex;
+  gap: 0.2rem;
+  font-size: 0.7rem;
+  color:#d47979;
+  font-family: "Hamlet", sans-serif;
+}
+
+.title-section .time-data .period-time {
+  display: block;
+  opacity: 0.8;
+}
+
+/* People List Display */
+.people-list {
+  margin-bottom: 0.1rem;  
+}
+
+.people-list,
+.people-list li,
+.people-list li a {
+  color:#d47979;
+  font-family: "Hamlet", sans-serif;
+  font-size: 0.7rem;
+  text-underline-position: under;
+}
+
+.people-list li {
+  list-style: none;
+  display: flex;
+  gap: 0.2rem;
+  font-size: 0.7rem;
+}
+
+/* Content Content Component Blocks Glob Display */
+
+.ordered-content {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 0.4rem;
+  align-items: start;
+}
+
+/* 12분할 그리드 안에서 개별 블록이 차지할 스팬 클래스 */
+.col-span-12 { grid-column: span 12; }
+.col-span-11  { grid-column: span 11; }
+.col-span-10  { grid-column: span 10; }
+.col-span-9  { grid-column: span 9; }
+.col-span-8  { grid-column: span 8; }
+.col-span-7  { grid-column: span 7; } /* 1/2 */
+.col-span-6  { grid-column: span 6; } /* 1/2 */
+.col-span-5  { grid-column: span 5; } /* 1/2 */
+.col-span-4  { grid-column: span 4; } /* 1/3 */
+.col-span-3  { grid-column: span 3; } /* 1/4 */
+.col-span-2  { grid-column: span 2; } /* 1/6 (작은 아이콘/배너용) */
+.col-span-1  { grid-column: span 1; }
+
+
+/* Content Component Blocks: ImageWithLink */
+
+.image-with-link {
+  max-width: 100%;
+  display: inline-block; 
+}
+.image-with-link a {
+  display: block;
+  width: 100%;
+}
+
+/* markdoc */
+
+.markdoc-content {
+  width: fit-content;
+  padding: 1rem;
+  font-size: 0.8rem;
+}
+
+.markdoc-content article p {
+  margin-bottom: 0.4rem;
+  line-height: 1.25rem;
+}
+
+.markdoc-content article p a {
+  color: #d47979;
+  background: #7b0513;
+}
+
+/* index.astro Time Line */
+
+.timeline-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 0.4rem;
+  align-items: start;
+  width: 100%;
+}
+
+.timeline-item {
+  border: 1px solid #7b0513;
+  padding: 0.4rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  opacity: 0.86;
+  transition: all 0.2s ease-out;
+  box-shadow: 0.1rem 0.2rem 0.2rem rgba(123, 5, 19, 0.08);
+}
+
+.timeline-item:hover {
+  opacity: 1;
+}
+
+.timeline-item a {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.timeline-item h2 {
+  font-weight: 300;
+  font-size: 0.75rem;
+  line-height: 1.4rem;
+}
+
+.timeline-item.work-item h2 {
+  text-align: center;
+}
+
+.timeline-item p,
+.timeline-item span,
+.timeline-item time {
+  font-size: 0.72rem;
+  line-height: 1.15rem;
+}
+
+.timeline-item .title {
+  display: flex;
+  justify-content: space-between;
+}
+
+.timeline-item .time-display {
+  display: flex;
+  align-items: center;
+}
+
+.timeline-item time {
+  color: #7b0513;
+}
+
+.badge { background: #7b0513; color: #fff; padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.7rem; }
+.thumb-wrap { width: 100%; overflow: hidden; background: #f4f4f4; }
+.thumb-wrap img { width: 100%; height: 100%; }
+
+/* index.astro Time Line: Scrapitem.astro */
+
+.scrap-item {
+  background-color: rgb(212, 121, 121);
+  padding: 0.4rem 0.65rem 0.6rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.scrap-item:hover {
+  border-radius: 0 0 40px 0;
+  transform: translate(-1px, -2px);
+}
+
+.scrap-item h2,
+.scrap-item p,
+.scrap-item span,
+.scrap-item time {
+  color: #7b0513;
+}
+
+.scrap-item h2 {
+  text-decoration: line-through;
+}
+
+/* index.astro Time Line: WorkItem.astro */
+
+.work-item {
+  border-width: 0.4rem;
+  --b: 0.4rem;
+  border: var(--b) solid transparent;
+  background: 
+    linear-gradient(#7b0513 0 0) padding-box,
+    radial-gradient(circle, #7b0513 30%, #d47979 40%, #7b0513 80%, #7b0513 100%, transparent 71%) border-box;
+  background-size: var(--b) var(--b);
+  background-repeat: repeat;
+  transition: all 0.1s ease-in;
+}
+
+.work-item:hover {
+  transform: rotate(1.2deg);
+}
+
+.work-item .title h2:hover {
+  text-decoration: underline;
+}
+
+.work-item p,
+.work-item h2,
+.work-item span,
+.work-item i,
+.work-item li,
+.work-item em,
+.work-item time,
+.work-item  {
+  color: #d47979;
+}
+
+.work-item .excerpt {
+  padding: 0 0.3rem;
+}
+
+.work-item .title {
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 0.2rem;
+}
+
+.work-item .title time {
+  font-size: 0.68rem;
+}
+
+/* index.astro Time Line: PostItem.astro */
+
+.post-item p,
+.post-iteml span,
+.post-item time {
+  color: #d47979;
+}
+
+.post-item {
+  background-color: rgba(123, 5, 19, 0.96);
+}
+
+.post-item h2 {
+  color: #d47979;
+  padding: 0 0.1rem;
+}
+
+.post-item p,
+.post-iteml span,
+.post-item time {
+  color: #7b0513;
+}
+
+.post-item .meta {
+  padding: 0.4rem 0.6rem 0.6rem;
+  background-color: rgb(212, 121, 121);
+  transition: all 0.2s ease-in-out;
+}
+
+.post-item:hover .meta {
+  border-radius: 0 0 40px 0;
+}
+
+/* index.astro Time Line: ArchiveItem.astro */
+
+.archive-item {
+  background-color: unset;
+  transition: all 0.2s ease-in-out;
+  border: none;
+  padding:0;
+  box-shadow: none;
+  opacity: 1;
+}
+
+.archive-item:hover {
+  border-radius: 0 0 40px 0;
+}
+
+.archive-item .gallery-item a {
+  opacity: 0.9;
+  transition: all 0.2s ease-out;
+}
+
+.archive-item .gallery-item a:hover {
+  opacity: 1;
+  padding-top: 5px;
+}
+
+.archive-item .gallery-item img {
+  box-shadow: 6px 4px 5px rgb(123, 5, 19, 0.4);
+}
+
+
+.text-block {
+  box-sizing: border-box;
+  max-width: 100%;
+  padding: 1.2rem 1.5rem;
+  color: #7b0513;
+  overflow-wrap: anywhere;
+  font-size: 0.68rem;
+  line-height: 1.5;
+  background-color: rgb(212 121 121 / 1);
+  background:
+    linear-gradient(rgb(212 121 121 / 1), rgb(212 121 121 / 1)) center / calc(100% - 20px) calc(100% - 20px) no-repeat,
+    radial-gradient(circle at bottom left, rgb(212 121 121 / 1), rgb(212 121 121 / 0) 60%) top right / 10px 10px no-repeat,
+    radial-gradient(circle at bottom right, rgb(212 121 121 / 1), rgb(212 121 121 / 0) 60%) top left / 10px 10px no-repeat,
+    radial-gradient(circle at top right, rgb(212 121 121 / 1), rgb(212 121 121 / 0) 60%) bottom left / 10px 10px no-repeat,
+    radial-gradient(circle at top left, rgb(212 121 121 / 1), rgb(212 121 121 / 0) 60%) bottom right / 10px 10px no-repeat,
+    linear-gradient(to left, rgb(212 121 121 / 0), rgb(212 121 121 / 1)) right center / 10px calc(100% - 20px) no-repeat,
+    linear-gradient(to right, rgb(212 121 121 / 0), rgb(212 121 121 / 1)) left center / 10px calc(100% - 20px) no-repeat,
+    linear-gradient(to bottom, rgb(212 121 121 / 0), rgb(212 121 121 / 1)) top center / calc(100% - 20px) 10px no-repeat,
+    linear-gradient(to top, rgb(212 121 121 / 0), rgb(212 121 121 / 1)) bottom center / calc(100% - 20px) 10px no-repeat;
+}
+
+.text-block.plain {
+  white-space: pre-wrap;
+  font: inherit;
+}
+
+.text-block a {
+  background-color: #7b0513;
+  color: #d47979;
+}
+
+@media (max-width: 768px) {
+  .ordered-content > * {
+    grid-column: span 12 !important; /* 모바일에선 기본 한 줄 전체 차지 */
+  }
+
+  #Content {
+    border: #7b0513 solid 0.5rem;
+    padding: 0.4rem !important;
+    gap: 0.4rem !important;
+  }
+  
+  .title-section {
+    min-width: auto;
+    width: 100%;
+    padding: 0.2rem 0.45rem 0.3rem;
+  }
+
+  .title-section h1.title {
+    font-size: 0.86rem;
+  }
+
+  .title-section .time-data {
+    font-size: 0.62rem;
+  }
+
+  .people-list, .people-list li, .people-list li a {
+    font-size: 0.62rem;
+  }
+
+  .markdoc-content {
+    padding: 0.25rem;
+    font-size: 0.7rem;
+  }
+
+  .ordered-content .image-item {
+    width: 100% !important;
+  }
+
+  .markdoc-content article p {
+    margin-bottom: 0.8rem;
+    line-height: 1.2rem;
+  }
+
+  .text-block {
+    padding: 0.45rem 0.75rem;
+    background:
+        linear-gradient(rgb(212 121 121 / 1), rgb(212 121 121 / 1)) center / calc(100% - 16px) calc(100% - 16px) no-repeat,
+        radial-gradient(circle at bottom left, rgb(212 121 121 / 1), rgb(212 121 121 / 0) 60%) top right / 8px 8px no-repeat,
+        radial-gradient(circle at bottom right, rgb(212 121 121 / 1), rgb(212 121 121 / 0) 60%) top left / 8px 8px no-repeat,
+        radial-gradient(circle at top right, rgb(212 121 121 / 1), rgb(212 121 121 / 0) 60%) bottom left / 8px 8px no-repeat,
+        radial-gradient(circle at top left, rgb(212 121 121 / 1), rgb(212 121 121 / 0) 60%) bottom right / 8px 8px no-repeat,
+        linear-gradient(to left, rgb(212 121 121 / 0), rgb(212 121 121 / 1)) right center / 8px calc(100% - 16px) no-repeat,
+        linear-gradient(to right, rgb(212 121 121 / 0), rgb(212 121 121 / 1)) left center / 8px calc(100% - 16px) no-repeat,
+        linear-gradient(to bottom, rgb(212 121 121 / 0), rgb(212 121 121 / 1)) top center / calc(100% - 16px) 8px no-repeat,
+        linear-gradient(to top, rgb(212 121 121 / 0), rgb(212 121 121 / 1)) bottom center / calc(100% - 16px) 8px no-repeat;
+  }
+
+  #Content .modal-window {
+    font-size: 2rem;
+    line-height: 2.4rem;
+  }
+
+  #Content .modal-close-btn {
+    width: 50px;
+    height: 50px;
+    font-size: 2rem;
+    right: calc(50% - 25px);
+    top: 61%;
+    position: fixed;
+  }
+
+  .row-images-container {
+    width: 100%;
+  }
+  
+}

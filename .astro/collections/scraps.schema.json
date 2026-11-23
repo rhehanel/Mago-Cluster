@@ -5,7 +5,12 @@
     "title": {
       "type": "string"
     },
-    "slug": {
+    "secondTitle": {
+      "type": "string"
+    },
+    "publishDate": {},
+    "displayTime": {},
+    "coverImage": {
       "type": "string"
     },
     "tags": {
@@ -13,17 +18,17 @@
       "items": {}
     },
     "people": {},
-    "coverImage": {
-      "type": "string"
-    },
-    "time": {},
-    "blocks": {},
     "markdocSize": {},
+    "contentDivision": {
+      "type": "boolean"
+    },
+    "blocks": {},
     "$schema": {
       "type": "string"
     }
   },
   "required": [
-    "title"
+    "title",
+    "publishDate"
   ]
 }

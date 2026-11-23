@@ -1,0 +1,14 @@
+---
+// src/components/markdoc/CustomLink.astro
+
+interface Props {
+  href?: string;
+  title?: string;
+}
+
+const { href = '#', title } = Astro.props;
+---
+
+<a href={href} title={title} target="_blank" rel="noopener noreferrer" class="markdoc-link">
+  <slot />
+</a>

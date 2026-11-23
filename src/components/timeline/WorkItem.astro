@@ -1,0 +1,96 @@
+---
+import TimeDisplay from '../glob/TimeDisplay.astro';
+import GlobalImage from '../GlobalImage.astro';
+import VideoPlayer from '../blocks/VideoPlayer.astro';
+
+interface Props {
+  item: any;
+  targetUrl: string;
+  timeData: any;
+}
+const { item, targetUrl, timeData } = Astro.props;
+const title = item.data.title;
+const videoData = item.video;
+---
+
+<article class="timeline-item work-item col-span-4 md:col-span-12">
+  <div class="media-container">
+    <a href={targetUrl}>
+      {/* 💡 1. 비디오 데이터가 존재하는 경우 우선 출력 */}
+      {videoData ? (
+        <div class="media-wrap video-wrap">
+          {videoData.isDirectFile ? (
+            <video 
+              src={videoData.url} 
+              autoplay 
+              loop 
+              muted 
+              playsinline
+            />
+          ) : videoData.isEmbed ? (
+            <iframe 
+              src={videoData.url} 
+              frameborder="0" 
+              allow="autoplay; encrypted-media" 
+              allowfullscreen
+            />
+          ) : (
+            <VideoPlayer {...videoData} />
+          )}
+        </div>
+      ) : item.thumbnail ? (
+        /* 💡 2. 비디오가 없고 썸네일 이미지만 존재할 때 */
+        <div class="media-wrap thumb-wrap">
+          <GlobalImage 
+            src={item.thumbnail} 
+            alt={title} 
+            imgStyle={{ width: '100%', height: '100%' }} 
+          />
+        </div>
+      ) : item.excerpt ? (
+        /* 💡 3. 비디오도 썸네일도 없을 때 본문 텍스트(300자) 출력 */
+        <div class="text-fallback-wrap">
+          <p class="excerpt">{item.excerpt}</p>
+        </div>
+      ) : null}
+    </a>
+  </div>
+
+  <div class="title">
+    <a href={targetUrl}><h2>{title}</h2></a>
+    <a href={targetUrl}>
+      {timeData && <TimeDisplay timeData={timeData} />}
+    </a>
+  </div>
+</article>
+
+<style>
+  .media-wrap {
+    width: 100%;
+    overflow: hidden;
+    background: #000;
+    position: relative;
+    border: 1px solid #7b0513;
+  }
+
+  .media-wrap video,
+  .media-wrap iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+
+  /* 💡 비디오/이미지가 없을 때 텍스트 요약문 박스 스타일 */
+  .text-fallback-wrap {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .excerpt {
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 6; /* 일정 높이 이상 길어지면 말줄임 처리 */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>

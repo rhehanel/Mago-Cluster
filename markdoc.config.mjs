@@ -6,6 +6,10 @@ export default defineMarkdocConfig({
       ...nodes.image,
       render: component('./src/components/GlobalImage.astro'),
     },
+    link: {
+      ...nodes.link,
+      render: component('./src/components/markdoc/CustomLink.astro'),
+    },
   },
   tags: {
     CustomImage: {
