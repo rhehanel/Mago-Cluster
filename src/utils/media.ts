@@ -11,10 +11,15 @@ export function getMediaUrl(path: string | null | undefined): string {
 
   // 배포(npm run build) 환경일 때만 R2 도메인 연결
   if (import.meta.env.PROD) {
-    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    // '../../assets/images/...' 또는 '/src/assets/images/...' 에서 '/images/...' 부분만 추출
+    const imagesIndex = path.indexOf('images/');
+    const cleanPath = imagesIndex !== -1
+      ? `/${path.slice(imagesIndex)}`
+      : (path.startsWith('/') ? path : `/${path}`);
+
     return `${MEDIA_BASE_URL}${cleanPath}`;
   }
 
-  // 로컬(npm run dev) 환경에서는 기존 경로(/images/...) 그대로 사용
+  // 로컬(npm run dev) 환경에서는 기존 경로 그대로 사용
   return path;
 }
