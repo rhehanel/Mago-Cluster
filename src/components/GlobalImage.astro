@@ -1,6 +1,7 @@
 ---
 // src/components/GlobalImage.astro
 import { Image } from 'astro:assets';
+import { getMediaUrl } from '../utils/media';
 
 interface Props {
   src: any;
@@ -11,10 +12,9 @@ interface Props {
 
 const { src, alt = "Image", imgStyle, imgClass = "" } = Astro.props;
 
-// 💡 1. 전달된 src가 무엇이든 간에 실제 경로 문자열이나 이미지 객체를 안전하게 추출하는 유틸리티
 function resolveSrcInput(input: any): any {
   if (!input) return null;
-  if (input instanceof Promise) return input; // 나중에 await 처리됨
+  if (input instanceof Promise) return input;
   if (typeof input === 'string') return input;
   
   if (typeof input === 'object') {
@@ -24,7 +24,6 @@ function resolveSrcInput(input: any): any {
     if (typeof input.url === 'string') return input.url;
     if (typeof input.value === 'string') return input.value;
 
-    // 객체 내부를 순회하며 유효한 경로 문자열 탐색
     for (const key of Object.keys(input)) {
       const found = resolveSrcInput(input[key]);
       if (found) return found;
@@ -39,36 +38,25 @@ if (resolvedSrc instanceof Promise) {
   resolvedSrc = resolveSrcInput(resolvedSrc);
 }
 
-const R2_DOMAIN = import.meta.env.PUBLIC_R2_DOMAIN || '';
-const isDev = import.meta.env.DEV;
-const useR2 = !isDev && R2_DOMAIN !== '';
-
 const isString = typeof resolvedSrc === 'string';
 const isObject = typeof resolvedSrc === 'object' && resolvedSrc !== null;
 
 let finalImageSrc = ''; 
 let finalAstroImage = null; 
 
-let rawPathForR2 = '';
-if (isString) {
-  rawPathForR2 = resolvedSrc;
-} else if (isObject && resolvedSrc.src) {
-  rawPathForR2 = resolvedSrc.src; 
-}
-const fileName = rawPathForR2 ? rawPathForR2.split('/').pop()?.split('?')[0] : '';
-
-if (useR2 && fileName) {
-  finalImageSrc = `${R2_DOMAIN}/works/${fileName}`;
-} else {
-  if (isObject && 'src' in resolvedSrc) {
-    finalAstroImage = resolvedSrc;
-  } else if (isString) {
+if (isObject && 'src' in resolvedSrc) {
+  finalAstroImage = resolvedSrc;
+} else if (isString) {
+  // 1. 배포 환경(PROD)이면서 외부 URL이 아닌 경우 -> R2 도메인(getMediaUrl) 사용
+  if (import.meta.env.PROD) {
+    finalImageSrc = getMediaUrl(resolvedSrc);
+  } else {
+    // 2. 로컬 개발 환경(DEV) -> 기존 로직대로 src/assets 또는 public 경로 렌더링
     const marker = 'assets/images';
     const idx = resolvedSrc.indexOf(marker);
     if (idx !== -1) {
       const relativePath = resolvedSrc.substring(idx + marker.length);
       const imagePath = `/src/assets/images${relativePath}`;
-      
       const images = import.meta.glob<{ default: ImageMetadata }>('/src/assets/images/**/*.{jpeg,jpg,png,webp,avif}');
       const imageModule = images[imagePath];
       
@@ -79,7 +67,6 @@ if (useR2 && fileName) {
         finalImageSrc = resolvedSrc; 
       }
     } else {
-      // 💡 경로에 markers가 없더라도 절대경로/상대경로 형태라면 그대로 렌더링 시도
       finalImageSrc = resolvedSrc; 
     }
   }
