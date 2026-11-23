@@ -1,1 +1,0 @@
-export { cldAssetsLoader, type CloudinaryAssetsLoaderOptions } from './assets-loader';
