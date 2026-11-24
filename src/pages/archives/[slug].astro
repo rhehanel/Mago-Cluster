@@ -40,12 +40,16 @@ const markdocSize = isCustom ? markdocSizeField.value ?? {} : {};
 const markdocSpan = markdocSize.gridSpan || '12';
 const markdocHeight = markdocSize.height || 'max-content';
 const markdocMargin = markdocSize.margin === true ? '0 auto' : 'unset';
+
+const textToCheck = `${post.data.title} ${post.body || ''}`;
+const hasKorean = /[가-힣]/.test(textToCheck);
+const pageLang = hasKorean ? 'ko' : 'en';
 ---
 
-<Layout title={post.data.title}>
+<Layout title={post.data.title} lang={pageLang}>
   <section class="title-section" style="display: none">
     <Title title={post.data.title} secondTitle={post.data.secondTitle} />
-    <PeopleList people={post.data.people} />
+    <!-- <PeopleList people={post.data.people} /> -->
     {post.data.displayTime && (
       <div class="time-data flex">
         <span>☀︎</span>

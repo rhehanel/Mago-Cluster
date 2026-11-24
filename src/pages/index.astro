@@ -14,25 +14,14 @@ const archives = await getCollection('archives');
 const scraps = await getCollection('scraps');
 
 function getSortDate(data: any) {
-  let dateString = null;
-  const displayTime = data.displayTime;
+  if (!data.publishDate) return new Date(0); // 날짜가 없는 글은 맨 뒤로 보냄
 
-  if (displayTime) {
-    if (displayTime.discriminant === 'date' && displayTime.value?.value) {
-      dateString = displayTime.value.value;
-    } else if (displayTime.discriminant === 'year' && displayTime.value?.value) {
-      dateString = `${displayTime.value.value}-01-01`;
-    } else if (displayTime.discriminant === 'time') {
-      const timeData = displayTime.value;
-      if (timeData?.discriminant === false && timeData.value?.date) {
-        dateString = timeData.value.date;
-      }
-    }
-  }
+  // Astro content collection에서 Date 객체로 들어오든 문자열로 들어오든 안전하게 변환
+  const parsedDate = data.publishDate instanceof Date
+    ? data.publishDate
+    : new Date(data.publishDate);
 
-  const finalString = dateString || data.publishDate;
-  const parsedDate = new Date(finalString);
-  return isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
+  return isNaN(parsedDate.getTime()) ? new Date(0) : parsedDate;
 }
 
 function extractFirstVideo(data: any, body?: string) {
@@ -100,7 +89,7 @@ function extractExcerpt(body?: string) {
 const allItems = [
   ...posts.map(p => ({ ...p, collectionType: 'posts' })),
   ...works.map(w => ({ ...w, collectionType: 'works' })),
-  ...archives.map(a => ({ ...a, collectionType: 'archives' })),
+  // ...archives.map(a => ({ ...a, collectionType: 'archives' })),
   ...scraps.map(s => ({ ...s, collectionType: 'scraps' }))
 ].map(item => ({
   ...item,

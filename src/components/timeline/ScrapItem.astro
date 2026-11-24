@@ -31,7 +31,18 @@ const title = item.data.title;
     </div>
   )}
   </a>
-  <a href={targetUrl}>{item.excerpt && <p class="excerpt">{item.excerpt}</p>}</a>
+  <a href={targetUrl}>{item.excerpt && 
+      <div class="excerpt">
+        {item.excerpt
+          .replace(/\\(\r?\n)/g, '$1') // 줄 끝에 붙은 \ 제거
+          .replace(/\\$/, '')          // 글자 수 자르기로 맨 끝에 남은 \ 제거
+          .split(/\n{2,}/)             // 그냥 엔터(연 구분) 기준으로만 <p> 분리
+          .map((stanza: string) => (
+            <p>{stanza}</p>
+        ))}
+      </div>  
+    }
+  </a>
 </article>
 
 <style>

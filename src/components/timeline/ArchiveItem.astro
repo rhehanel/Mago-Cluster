@@ -55,7 +55,15 @@ const firstBlock = item.data.blocks && item.data.blocks.length > 0 ? item.data.b
     /* 💡 상황 D: 블록은 있지만 시각 매체가 아닌 텍스트/리스트 류인 경우 */
     : (
       <div class="text-fallback-wrap">
-        <p class="excerpt">{item.excerpt}</p>
+        <p class="excerpt">
+          {item.excerpt
+            .replace(/\\(\r?\n)/g, '$1') // 줄 끝에 붙은 \ 제거
+            .replace(/\\$/, '')          // 글자 수 자르기로 맨 끝에 남은 \ 제거
+            .split(/\n{2,}/)             // 그냥 엔터(연 구분) 기준으로만 <p> 분리
+            .map((stanza: string) => (
+              <p>{stanza}</p>
+          ))}
+        </p>
       </div>
     )
   ) : item.thumbnail ? (
@@ -72,7 +80,15 @@ const firstBlock = item.data.blocks && item.data.blocks.length > 0 ? item.data.b
   ) : item.excerpt ? (
     /* 💡 상황 F: 완전한 순수 텍스트 마크독 문서인 경우 */
     <div class="text-fallback-wrap">
-      <p class="excerpt">{item.excerpt}</p>
+      <div class="excerpt">
+        {item.excerpt
+        .replace(/\\(\r?\n)/g, '$1') // 줄 끝에 붙은 \ 제거
+        .replace(/\\$/, '')          // 글자 수 자르기로 맨 끝에 남은 \ 제거
+        .split(/\n{2,}/)             // 그냥 엔터(연 구분) 기준으로만 <p> 분리
+        .map((stanza: string) => (
+          <p>{stanza}</p>
+        ))}
+      </div>
     </div>
   ) : null}
 </article>

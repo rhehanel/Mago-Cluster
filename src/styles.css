@@ -613,7 +613,12 @@ h1.title {
 .timeline-item h2 {
   font-weight: 300;
   font-size: 0.75rem;
-  line-height: 1.4rem;
+  line-height: 1.2rem;
+  margin-bottom: 0.2rem;
+}
+
+.timeline-item.work-item h2 {
+  font-weight: 600;
 }
 
 .timeline-item.work-item h2 {
@@ -639,6 +644,11 @@ h1.title {
 
 .timeline-item time {
   color: #7b0513;
+}
+
+.excerpt {
+  white-space: pre-line;
+  -webkit-line-clamp: 2;
 }
 
 .badge { background: #7b0513; color: #fff; padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.7rem; }
@@ -810,6 +820,10 @@ h1.title {
   color: #d47979;
 }
 
+#Content .modal-close-btn {
+  display: none;
+}
+
 @media (max-width: 768px) {
   .ordered-content > * {
     grid-column: span 12 !important; /* 모바일에선 기본 한 줄 전체 차지 */
@@ -819,6 +833,7 @@ h1.title {
     border: #7b0513 solid 0.5rem;
     padding: 0.4rem !important;
     gap: 0.4rem !important;
+    overflow-x: hidden;
   }
   
   .title-section {
@@ -873,6 +888,7 @@ h1.title {
   }
 
   #Content .modal-close-btn {
+    display: none;
     width: 50px;
     height: 50px;
     font-size: 2rem;
