@@ -18,18 +18,18 @@ const title = item.data.title;
         </a>
         {timeData && <TimeDisplay timeData={timeData} />}
     </div>
-    <a href={targetUrl}>
     {item.thumbnail && (
-      <div class="thumb-wrap">
-        {/* 💡 기본 img 태그 대신 GlobalImage 사용 */}
-        <GlobalImage 
-          src={item.thumbnail} 
-          alt={title} 
-          imgStyle={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-        />
-      </div>
+      <a href={targetUrl}>
+        <div class="thumb-wrap">
+          {/* 💡 기본 img 태그 대신 GlobalImage 사용 */}
+          <GlobalImage 
+            src={item.thumbnail} 
+            alt={title} 
+            imgStyle={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+          />
+        </div>
+      </a>
     )}
-    </a>
     <div class="meta">
         <a href={targetUrl}>
             {item.excerpt && 

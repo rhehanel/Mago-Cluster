@@ -900,5 +900,9 @@ h1.title {
   .row-images-container {
     width: 100%;
   }
+
+  .overflow-box {
+    column-count: 1 !important;
+  }
   
 }

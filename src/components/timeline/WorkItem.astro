@@ -15,53 +15,57 @@ const videoData = item.video;
 
 <article class="timeline-item work-item col-span-4 md:col-span-12">
   <div class="media-container">
-    <a href={targetUrl}>
-      {/* 💡 1. 비디오 데이터가 존재하는 경우 우선 출력 */}
-      {videoData ? (
-        <div class="media-wrap video-wrap">
-          {videoData.isDirectFile ? (
-            <video 
-              src={videoData.url} 
-              autoplay 
-              loop 
-              muted 
-              playsinline
-            />
-          ) : videoData.isEmbed ? (
-            <iframe 
-              src={videoData.url} 
-              frameborder="0" 
-              allow="autoplay; encrypted-media" 
-              allowfullscreen
-            />
-          ) : (
-            <VideoPlayer {...videoData} />
-          )}
-        </div>
+    {/* 💡 1. 비디오 데이터가 존재하는 경우 우선 출력 */}
+    {videoData ? (
+        <a href={targetUrl}>
+          <div class="media-wrap video-wrap">
+            {videoData.isDirectFile ? (
+              <video 
+                src={videoData.url} 
+                autoplay 
+                loop 
+                muted 
+                playsinline
+              />
+            ) : videoData.isEmbed ? (
+              <iframe 
+                src={videoData.url} 
+                frameborder="0" 
+                allow="autoplay; encrypted-media" 
+                allowfullscreen
+              />
+            ) : (
+              <VideoPlayer {...videoData} />
+            )}
+          </div>
+        </a>
       ) : item.thumbnail ? (
         /* 💡 2. 비디오가 없고 썸네일 이미지만 존재할 때 */
-        <div class="media-wrap thumb-wrap">
-          <GlobalImage 
-            src={item.thumbnail} 
-            alt={title} 
-            imgStyle={{ width: '100%', height: '100%' }} 
-          />
-        </div>
+        <a href={targetUrl}>
+          <div class="media-wrap thumb-wrap">
+            <GlobalImage 
+              src={item.thumbnail} 
+              alt={title} 
+              imgStyle={{ width: '100%', height: '100%' }} 
+            />
+          </div>
+        </a>
       ) : item.excerpt ? (
         /* 💡 3. 비디오도 썸네일도 없을 때 본문 텍스트(300자) 출력 */
-        <div class="text-fallback-wrap">
-          <div class="excerpt">
-            {item.excerpt
-              .replace(/\\(\r?\n)/g, '$1') // 줄 끝에 붙은 \ 제거
-              .replace(/\\$/, '')          // 글자 수 자르기로 맨 끝에 남은 \ 제거
-              .split(/\n{2,}/)             // 그냥 엔터(연 구분) 기준으로만 <p> 분리
-              .map((stanza: string) => (
-                <p>{stanza}</p>
-            ))}
+        <a href={targetUrl}>
+          <div class="text-fallback-wrap">
+            <div class="excerpt">
+              {item.excerpt
+                .replace(/\\(\r?\n)/g, '$1') // 줄 끝에 붙은 \ 제거
+                .replace(/\\$/, '')          // 글자 수 자르기로 맨 끝에 남은 \ 제거
+                .split(/\n{2,}/)             // 그냥 엔터(연 구분) 기준으로만 <p> 분리
+                .map((stanza: string) => (
+                  <p>{stanza}</p>
+              ))}
+            </div>
           </div>
-        </div>
+        </a>
       ) : null}
-    </a>
   </div>
 
   <div class="title">

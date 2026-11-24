@@ -176,7 +176,7 @@ const markdocInnerStyle = {
     box-sizing: border-box;
     max-width: 100%;
     overflow-y: auto;
-    padding: 0.2rem 0.5rem;
+    padding: 0.5rem 0.5rem;
     scrollbar-color: auto;
     scrollbar-width: auto;
   }
@@ -208,6 +208,10 @@ const markdocInnerStyle = {
         linear-gradient(to right, rgb(212 121 121 / 0), rgb(212 121 121 / 1)) left center / 8px calc(100% - 16px) no-repeat,
         linear-gradient(to bottom, rgb(212 121 121 / 0), rgb(212 121 121 / 1)) top center / calc(100% - 16px) 8px no-repeat,
         linear-gradient(to top, rgb(212 121 121 / 0), rgb(212 121 121 / 1)) bottom center / calc(100% - 16px) 8px no-repeat;
+    }
+
+    .overflow-box {
+      column-count: 1 !important;
     }
   }
 </style>

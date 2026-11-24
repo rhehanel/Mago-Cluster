@@ -101,12 +101,15 @@ const allItems = [
 
 allItems.sort((a, b) => b.sortDate.getTime() - a.sortDate.getTime());
 
-// 💡 2. 최신순 포스트를 3개의 컬럼 배열로 분할 (0번 컬럼, 1번 컬럼, 2번 컬럼)
+// 💡 2. 최신순 포스트를 3개의 컬럼 배열로 분할하면서 원래 순서(originalIndex) 기록
 const NUM_COLUMNS = 3;
-const columns: typeof allItems[] = Array.from({ length: NUM_COLUMNS }, () => []);
+const columns: (typeof allItems[number] & { originalIndex: number })[][] = Array.from(
+  { length: NUM_COLUMNS },
+  () => []
+);
 
 allItems.forEach((item, index) => {
-  columns[index % NUM_COLUMNS].push(item);
+  columns[index % NUM_COLUMNS].push({ ...item, originalIndex: index });
 });
 ---
 
@@ -129,18 +132,22 @@ allItems.forEach((item, index) => {
             const targetUrl = `/${item.collectionType}/${cleanSlug}`;
             const timeData = item.data.displayTime || null;
 
-            switch (item.collectionType) {
-              case 'posts':
-                return <PostItem item={item} targetUrl={targetUrl} timeData={timeData} />;
-              case 'works':
-                return <WorkItem item={item} targetUrl={targetUrl} timeData={timeData} />;
-              // case 'archives':
-              //   return <ArchiveItem item={item} targetUrl={targetUrl} timeData={timeData} />;
-              case 'scraps':
-                return <ScrapItem item={item} targetUrl={targetUrl} timeData={timeData} />;
-              default:
-                return null;
-            }
+            return (
+              <div class="masonry-item-wrap" style={`--order: ${item.originalIndex};`}>
+                {item.collectionType === 'posts' && (
+                  <PostItem item={item} targetUrl={targetUrl} timeData={timeData} />
+                )}
+                {item.collectionType === 'works' && (
+                  <WorkItem item={item} targetUrl={targetUrl} timeData={timeData} />
+                )}
+                {/* {item.collectionType === 'archives' && (
+                  <ArchiveItem item={item} targetUrl={targetUrl} timeData={timeData} />
+                )} */}
+                {item.collectionType === 'scraps' && (
+                  <ScrapItem item={item} targetUrl={targetUrl} timeData={timeData} />
+                )}
+              </div>
+            );
           })}
         </div>
       ))}
@@ -277,10 +284,24 @@ allItems.forEach((item, index) => {
     border-radius: 4px;
   }
 
+  .masonry-item-wrap {
+    width: 100%;
+  }
+
   /* 모바일/태블릿 반응형 */
   @media (max-width: 768px) {
     .timeline-masonry {
       flex-direction: column;
+    }
+
+    /* 컬럼 박스를 레이아웃에서 투명화하여 내부 아이템들을 직계 자식으로 취급 */
+    .masonry-column {
+      display: contents;
+    }
+
+    /* 저장해 둔 원래 시간순대로 세로 배치 */
+    .masonry-item-wrap {
+      order: var(--order);
     }
   }
 </style>
